@@ -34,7 +34,7 @@ ToDo:
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title> <?php echo $_GET["name"]," — Wikivoyage Map" ?></title>
     <link rel="icon" href="./lib/images/favicon.png" type= "image/png" />
-    <link rel="stylesheet" href="./lib/leaflet.css" />
+    <link rel="stylesheet" href="./lib/leaflet/leaflet.css" />
     <link rel="stylesheet" href="./lib/poimap.css" />
   </head>
 <body>
@@ -42,7 +42,7 @@ ToDo:
   <div id="logo">
     <img src="./lib/images/logo.png" alt= "Logo" title= "Version 2016-07-13" width="64" height="64">
   </div>
-  <script type="text/javascript" src="./lib/leaflet.js"></script>
+  <script type="text/javascript" src="./lib/leaflet/leaflet.js"></script>
   <script type="text/javascript" src="./lib/buttons-new.js"></script>
   <script type="text/javascript" src="./lib/zoomdisplay.js"></script>
   <script type="text/javascript" src="./lib/i18n.js"></script>
@@ -242,21 +242,14 @@ if (autozoom == "yes") {
 
 // Controls
 
-var basemaps = {
-  'Wikimedia': wikimedia,
-  'Mapnik': mapnik,
-  'Relief_map': landscape
-}; 
-var overlays = {
-  'Monuments': monuments
-};
+var basemaps = {};
+var overlays = {};
 
-basemaps[L._('Wikimedia') + ' <img src="./lib/images/wmf-logo-12.png" />'] = basemaps.Wikimedia;
-basemaps[L._('Mapnik') + ' <img src="./lib/images/external.png" />'] = basemaps.Mapnik;
-basemaps[L._('Relief_map') + ' <img src="./lib/images/external.png" />'] = basemaps.Relief_map;
-overlays[L._('Monuments') + ' <img src="./lib/images/wv-logo-12.png" />'] = overlays.Monuments;
+basemaps[L._('Wikimedia') + ' <img src="./lib/images/wmf-logo-12.png" />'] = wikimedia;
+basemaps[L._('Mapnik') + ' <img src="./lib/images/external.png" />'] = mapnik;
+basemaps[L._('Relief_map') + ' <img src="./lib/images/external.png" />'] = landscape;
+overlays[L._('Monuments') + ' <img src="./lib/images/wv-logo-12.png" />'] = monuments;
     
-var maptype = 'monmap';
 
   map.addControl(new L.Control.Layers(basemaps, overlays));
   map.addControl(new L.Control.Scale());
