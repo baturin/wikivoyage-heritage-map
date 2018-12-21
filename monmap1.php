@@ -167,26 +167,20 @@ var jsf =   <?php echo json_encode($f); ?>; // image
 
 // Make map 
 var map = new L.Map('map', {center: new L.LatLng(jslat,jslon), zoom: jszoom, zoomControl: false});
-var monumentsAttribution = '';
 var popup = L.popup();
 
 map.on('click', onMapClick);
 
-// Base layer "Wikimedia"
-if (jslayer.indexOf("W") != -1) {
-  map.addLayer(wikimedia);
+var mapLayer = wikimedia;
+
+if (jslayer.indexOf("M") !== -1) {
+    mapLayer = mapnik;
+} else if (jslayer.indexOf("R") !== -1) {
+    mapLayer = landscape;
 }
 
-// Base layer "Mapnik"
-if (jslayer.indexOf("M") != -1) {
-  map.addLayer(mapnik);
-} 
+map.addLayer(mapLayer);
 
-  // Base layer "Landscape" http
-  if (jslayer.indexOf("R") != -1) {
-    map.addLayer(landscape);
-  }
-  
   // load local image
   function imgError(image) {   
     image.onerror = "";
