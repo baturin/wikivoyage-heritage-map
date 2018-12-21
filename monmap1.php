@@ -46,7 +46,7 @@ ToDo:
   <script type="text/javascript" src="./lib/buttons-new.js"></script>
   <script type="text/javascript" src="./lib/zoomdisplay.js"></script>
   <script type="text/javascript" src="./lib/i18n.js"></script>
-  <script type="text/javascript" src="./locale/<?php echo $_GET['lang'] ?: 'en'; ?>.js"></script>
+  <script type="text/javascript" src="./locale/ru.js"></script>
   <script type="text/javascript" src="./lib/maptiles.js"></script>
 
 <?php
