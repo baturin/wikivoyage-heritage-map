@@ -13,6 +13,26 @@ class WikivoyagePageReader
     }
 }
 
+class WikimediaMapsReader
+{
+    /**
+     * @param string[] $wikidataIds
+     * @return array|null
+     */
+    public function getGeoJSONForWikidataIds($wikidataIds)
+    {
+        $geoJsonData = null;
+
+        if (count($wikidataIds) > 0) {
+            $url = 'https://maps.wikimedia.org/geoshape?getgeojson=1&ids=' . implode(',', $wikidataIds);
+            $geoJsonStr = file_get_contents($url);
+            $geoJsonData = json_decode($geoJsonStr, true);
+        }
+
+        return $geoJsonData;
+    }
+}
+
 class RequestParameters
 {
     public function getName()
@@ -42,6 +62,7 @@ class RequestParameters
 }
 
 $wikivoyagePageReader = new WikivoyagePageReader();
+$wikimediaMapsReader = new WikimediaMapsReader();
 $requestParameters = new RequestParameters();
 
 ?>
@@ -79,7 +100,7 @@ License:
 <?php
 
 
-$file= str_replace("\'","'", $requestParameters->getName());
+$file = str_replace("\'","'", $requestParameters->getName());
 $content = $wikivoyagePageReader->read($file);
 
 // Strip comments
@@ -101,7 +122,7 @@ $total = count($apart);
 for($i=1; $i < $total; $i++){
   $text = explode('}}', $apart[$i]);
   $part = str_replace('|', '&', $text[0]);
-  $name = $type = $lat = $long = $image = '';
+  $name = $type = $lat = $long = $image = $wdid = '';
   parse_str($part); 
   $c[$i] = (trim($type)  ?: "other");
   $x[$i] = (trim($lat)  + 0 ?: "0");
@@ -112,7 +133,17 @@ for($i=1; $i < $total; $i++){
     $md5 = md5($f[$i]);
     $f[$i] = substr($md5,0,1) . "/" . substr($md5,0,2) . "/" . $f[$i];
   }
+
+  if (!is_null($wdid)) {
+      $wdid = trim($wdid);
+      if ($wdid !== '') {
+          $wikidataIds[] = $wdid;
+      }
+  }
 }
+
+$wikidataBoundaries = $wikimediaMapsReader->getGeoJSONForWikidataIds($wikidataIds);
+
 $max = $i;
 
 ?>
@@ -164,6 +195,7 @@ var jsx =   <?php echo json_encode($x); ?>; // lat
 var jsy =   <?php echo json_encode($y); ?>; // long
 var jsn =   <?php echo json_encode($n); ?>; // name
 var jsf =   <?php echo json_encode($f); ?>; // image
+var wikidataBoundariesGeoJson = <?php echo json_encode($wikidataBoundaries); ?>;
 
 // Make map 
 var map = new L.Map('map', {center: new L.LatLng(jslat,jslon), zoom: jszoom, zoomControl: false});
@@ -214,6 +246,9 @@ while(mi < jsmax){
   mi++;
 }
 map.addLayer(monuments);
+if (wikidataBoundariesGeoJson) {
+    L.geoJSON(wikidataBoundariesGeoJson).addTo(map);
+}
 
 if (jslayer.indexOf("X") != -1) {
   var redIcon = L.icon({iconUrl: './ico24/target.png', iconSize: [32,32], iconAnchor: [16,16]});
