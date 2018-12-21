@@ -1,38 +1,65 @@
+<?php
+
+class WikivoyagePageReader
+{
+    public function read($page)
+    {
+        return file_get_contents($this->getUrl($page));
+    }
+
+    private function getUrl($page)
+    {
+        return "https://ru.wikivoyage.org/w/index.php?title=" . $page . "&action=raw";
+    }
+}
+
+class RequestParameters
+{
+    public function getName()
+    {
+        return $_GET['name'];
+    }
+
+    public function getLat()
+    {
+        return (float)$_GET['lat'];
+    }
+
+    public function getLon()
+    {
+        return (float)$_GET['lon'];
+    }
+
+    public function getLayer()
+    {
+        return $_GET['layer'];
+    }
+
+    public function getZoom()
+    {
+        return (int)$_GET["zoom"];
+    }
+}
+
+$wikivoyagePageReader = new WikivoyagePageReader();
+$requestParameters = new RequestParameters();
+
+?>
 <!DOCTYPE html>
 <html>
 <!-- 
-MonMap:
-  Version 2016-07-13
-Author:
+Wikivoyage cultural and natural heritage maps:
+Original author:
   https://de.wikivoyage.org/wiki/User:Mey2008
 Contributors:
-  no 
-License: 
-  Affero GPL v3 or later http://www.gnu.org/licenses/agpl-3.0.html 
-Recent changes:
-  2016-07-13: Wikimedia tiles(Mapquest stop service)
-  2015-11-07: + natural monument
-  2015-11-06: new layer "Wikimedia" + to default
-  2015-09-22: new translate for layers
-  2015-09-14: debug script
-  2015-08-31: external contnet warning
-  2015-07-26: optimize for count()
-  2015-05-25: poimap.css
-  2015-05-22: maptiles.js
-  2015-05-20: layer markers now monuments
-  2015-05-19: Localization for layers control
-  2015-05-17: Localization reversed for layers (IE incompatible)
-  2015-05-16: buttons-new.js
-  2015-05-13: more localization
-  2015-04-25: mon-icon.png
-ToDo:
-  nothing
+  https://ru.wikivoyage.org/wiki/User:AlexeyBaturin
+License:
+  Affero GPL v3 or later http://www.gnu.org/licenses/agpl-3.0.html
 -->
-   
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title> <?php echo $_GET["name"]," — Wikivoyage Map" ?></title>
+    <title><?php echo htmlspecialchars($requestParameters->getName()) . " — Wikivoyage Map"; ?></title>
     <link rel="icon" href="./lib/images/favicon.png" type= "image/png" />
     <link rel="stylesheet" href="./lib/leaflet/leaflet.css" />
     <link rel="stylesheet" href="./lib/poimap.css" />
@@ -51,23 +78,9 @@ ToDo:
 
 <?php
 
-/*
-// PHP error reporting
-error_reporting (E_ALL | E_STRICT);
-ini_set ('display_errors' , 1);
-*/
 
-// Reading URL parameters
-$lang= $_GET["lang"];
-$file= str_replace("\'","'",$_GET["name"]);
-
-// Reading article data
-$wikisource = 'wikivoyage';
-if ($lang == 'lv') {
-  $wikisource = 'wikipedia';
-}
-
-$content = file_get_contents("https://" . $lang . '.' . $wikisource . ".org/w/index.php?title=" . $file . "&action=raw");
+$file= str_replace("\'","'", $requestParameters->getName());
+$content = $wikivoyagePageReader->read($file);
 
 // Strip comments
 $content = preg_replace('/<!--(.|\s)*?-->/', '', $content); 
@@ -80,8 +93,6 @@ $content= str_ireplace(array('Monument|', 'Natural monument|'), array('monument|
 
 // strip unwanted templates
 $content = preg_replace("/{{(?!Monument\|)(.|\s)*?}}/im", "", $content); 
-
-// echo $content; // *** TEST ***
 
 // read parameters {{monument|
 $apart = explode('{{monument|', $content);
@@ -104,19 +115,11 @@ for($i=1; $i < $total; $i++){
 }
 $max = $i;
 
-// echo '<pre>'; print_r($GLOBALS); echo '</pre>'; // *** TEST ***
-
 ?>
-
-<noscript> 
- <h2><a href="http://activatejavascript.org/en/">This application needs JavaScript. - See instructions:</a></h2>
-</noscript>
 
 <script type='text/javascript'>
 
-// stop for testing // *** TEST ***
-
-  var lang = "<?php echo $_GET['lang'] ?: 'en'; ?>";
+  var lang = "ru";
   L.registerLocale(lang, mylocale);
   L.setLocale(lang);
   
@@ -137,36 +140,25 @@ function onMapClick(e) {
 }
 
 // All arrays to js
-var jswiki = '<?php echo $wikisource; ?>';
-var jslat   =  '<?php echo $_GET["lat"] ?: "0";?>';
-if (isNaN(jslat)) {
-  jslat= "0"; alert(L._("ERROR: Coordinates must be numeric!"));
-}
-jslat =parseFloat(jslat);
-var jslon   =  '<?php echo $_GET["lon"] ?: "0"; ?>';
-if (isNaN(jslon)) {
-  jslon= "0";alert(L._("ERROR: Coordinates must be numeric!"));
-}
-jslon =parseFloat(jslon);
-var jszoom  =  '<?php echo $_GET["zoom"] ?: "14"; ?>';
+var jslat = <?php echo json_encode($requestParameters->getLat() ?: 0);?>;
+var jslon = <?php echo json_encode($requestParameters->getLon() ?: 0); ?>;
+var jszoom = <?php echo json_encode($requestParameters->getZoom() ?: 14); ?>;
 var autozoom = "no";
-if (jszoom == "auto") {
+if (jszoom === "auto") {
  autozoom = "yes";
 }
 if (parseInt(jszoom) < 2 | parseInt(jszoom) > 17 | isNaN(jszoom) | jslat === 0 | jslon === 0) {
   jszoom = 14;
 }
 var jslayer = '<?php echo $_GET["layer"] ?: "W"; ?>'.toUpperCase();
-if (jslayer == "UNDEFINED") {
+if (jslayer === "UNDEFINED") {
   jslayer = "WX";
 }
-if (jslayer == "OX") {
+if (jslayer === "OX") {
   jslayer = "WX";
 }
 
-var jslang  = '<?php echo $_GET["lang"]; ?>'.toLowerCase();
-
-var jsmax = <?php echo $max; ?>; 
+var jsmax = <?php echo $max; ?>;
 var jsc =   <?php echo json_encode($c); ?>; // type
 var jsx =   <?php echo json_encode($x); ?>; // lat
 var jsy =   <?php echo json_encode($y); ?>; // long
@@ -198,7 +190,7 @@ if (jslayer.indexOf("M") != -1) {
   // load local image
   function imgError(image) {   
     image.onerror = "";
-    image.src = image.src.replace("wikipedia/commons","wikivoyage/" + jslang);
+    image.src = image.src.replace("wikipedia/commons","wikivoyage/ru");
     return true;
   } 
 
@@ -208,7 +200,7 @@ var mi=1;
 while(mi < jsmax){
   if (jsx[mi] != "0"){
     var tooltip = jsn[mi].replace('<br />','');
-    var imgurl = '"https://' + jslang + '.m.' + jswiki + '.org/wiki/File:' + jsf[mi].substr(5) + '"';
+    var imgurl = '"https://ru.m.wikivoyage.org/wiki/File:' + jsf[mi].substr(5) + '"';
     // no image
     if (jsf[mi] == "0/01/no"){
       var content = jsn[mi];
@@ -249,23 +241,21 @@ basemaps[L._('Wikimedia') + ' <img src="./lib/images/wmf-logo-12.png" />'] = wik
 basemaps[L._('Mapnik') + ' <img src="./lib/images/external.png" />'] = mapnik;
 basemaps[L._('Relief_map') + ' <img src="./lib/images/external.png" />'] = landscape;
 overlays[L._('Monuments') + ' <img src="./lib/images/wv-logo-12.png" />'] = monuments;
-    
 
-  map.addControl(new L.Control.Layers(basemaps, overlays));
-  map.addControl(new L.Control.Scale());
-  map.addControl(new L.Control.Buttons());
-  
-  // External content warning
-  var imgpath = '../lib/images/'; 
-  if (L.Browser.ie) {
-    imgpath = './lib/images/';
-  }
-  var warning = 'url(' + imgpath + 'line.png) "' + L._('Content with {external} is hosted externally, so enabling it shares your data with other sites.',{external:' "url(' + imgpath + 'external.png)" '}) + '"';
-  document.styleSheets[1].cssRules[4].style.content = warning;
+map.addControl(new L.Control.Layers(basemaps, overlays));
+map.addControl(new L.Control.Scale());
+map.addControl(new L.Control.Buttons());
+
+// External content warning
+var imgpath = '../lib/images/';
+if (L.Browser.ie) {
+imgpath = './lib/images/';
+}
+var warning = 'url(' + imgpath + 'line.png) "' + L._('Content with {external} is hosted externally, so enabling it shares your data with other sites.',{external:' "url(' + imgpath + 'external.png)" '}) + '"';
+document.styleSheets[1].cssRules[4].style.content = warning;
 
 </script>
  
 </div>
 </body>
 </html>
-
