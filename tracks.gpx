@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ 
+ <gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1"> 
+ <metadata>
+ <copyright author="Wikivoyage">
+ <year>2014</year>
+ <license>CC-BY-SA</license>
+ </copyright>
+ </metadata>
+ <trk>
+
+ <trkseg>  
+ <name>Sentier Nature du Bois des Manants</name>
+ <desc>Parcours forestier</desc>
+ <cmt>bleu roi</cmt>
+ <trkpt lat="50.5540" lon="5.5846" />
+ <trkpt lat="50.5543" lon="5.5847" />
+ <trkpt lat="50.5544" lon="5.5850" />
+ <trkpt lat="50.5544" lon="5.5852" />
+ <trkpt lat="50.5542" lon="5.5857" />
+ <trkpt lat="50.5543" lon="5.5858" />
+ <trkpt lat="50.5550" lon="5.5884" />
+ <trkpt lat="50.5552" lon="5.5888" />
+ <trkpt lat="50.5554" lon="5.5890" />
+ <trkpt lat="50.5558" lon="5.5891" />
+ <trkpt lat="50.5561" lon="5.5893" />
+ <trkpt lat="50.5562" lon="5.5901" />
+ <trkpt lat="50.5562" lon="5.5908" />
+ <trkpt lat="50.5562" lon="5.5910" />
+ <trkpt lat="50.5575" lon="5.5926" />
+ <trkpt lat="50.5576" lon="5.5926" />
+ <trkpt lat="50.5578" lon="5.5928" />
+ <cmt>Résurgence</cmt>
+ <trkpt lat="50.5579" lon="5.5924" />
+ <trkpt lat="50.5582" lon="5.5924" />
+ <trkpt lat="50.5584" lon="5.5927" />
+ <trkpt lat="50.5583" lon="5.5930" />
+ <trkpt lat="50.5582" lon="5.5935" />
+ <trkpt lat="50.5579" lon="5.5942" />
+ <trkpt lat="50.5583" lon="5.5945" />
+ <trkpt lat="50.5583" lon="5.5952" />
+ <trkpt lat="50.5584" lon="5.5958" />
+ <trkpt lat="50.5585" lon="5.5972" />
+ <trkpt lat="50.5586" lon="5.5977" />
+ <cmt>Chantoir</cmt>
+ <trkpt lat="50.5585" lon="5.5979" />
+ <trkpt lat="50.5586" lon="5.5989" />
+ <trkpt lat="50.5588" lon="5.6001" />
+ <trkpt lat="50.5588" lon="5.6005" />
+ <trkpt lat="50.5586" lon="5.6001" />
+ <trkpt lat="50.5582" lon="5.5999" />
+ <trkpt lat="50.5580" lon="5.5989" />
+ <trkpt lat="50.5580" lon="5.5986" />
+ <trkpt lat="50.5578" lon="5.5976" />
+ <trkpt lat="50.5575" lon="5.5949" />
+ <trkpt lat="50.5573" lon="5.5946" />
+ <trkpt lat="50.5573" lon="5.5940" />
+ <trkpt lat="50.5576" lon="5.5928" />
+ <trkpt lat="50.5575" lon="5.5926" />
+ <trkpt lat="50.5568" lon="5.5917" />
+ <trkpt lat="50.5563" lon="5.5912" />
+ <trkpt lat="50.5561" lon="5.5909" />
+ <trkpt lat="50.5554" lon="5.5906" />
+ <cmt>Trou des Nutons</cmt>
+ <trkpt lat="50.55499" lon="5.59053" />
+ <trkpt lat="50.5547" lon="5.5906" />
+ <trkpt lat="50.5546" lon="5.5911" />
+ <trkpt lat="50.5544" lon="5.5903" />
+ <trkpt lat="50.5542" lon="5.5909" />
+ <cmt>Monument Donnay</cmt>
+ <trkpt lat="50.5534" lon="5.5908" />
+ <trkpt lat="50.5535" lon="5.5904" />
+ <cmt>Panorama</cmt>
+ <trkpt lat="50.5535" lon="5.5892" />
+ <trkpt lat="50.5535" lon="5.5904" />
+ <trkpt lat="50.5534" lon="5.5908" />
+ <cmt>Vers le bois des Manants</cmt>
+ <trkpt lat="50.55353" lon="5.59084" />
+ <trkpt lat="50.5538" lon="5.5913" />
+ <trkpt lat="50.5541" lon="5.5916" />
+ <trkpt lat="50.5544" lon="5.5918" />
+ <trkpt lat="50.5551" lon="5.5927" />
+ <trkpt lat="50.5563" lon="5.5977" />
+ <trkpt lat="50.5570" lon="5.6015" />
+ <trkpt lat="50.5575" lon="5.6034" />
+ <trkpt lat="50.5554" lon="5.6043" />
+ <trkpt lat="50.55387" lon="5.59553" />
+ <trkpt lat="50.55380" lon="5.59538" />
+ <trkpt lat="50.55340" lon="5.59564" />
+ <trkpt lat="50.55232" lon="5.59616" />
+ <trkpt lat="50.55196" lon="5.59624" />
+ <trkpt lat="50.55179" lon="5.59632" />
+ <trkpt lat="50.55180" lon="5.59669" />
+ <trkpt lat="50.55169" lon="5.59755" />
+ <trkpt lat="50.55150" lon="5.59827" />
+ <trkpt lat="50.55116" lon="5.59825" />
+ <trkpt lat="50.55051" lon="5.59840" />
+ <trkpt lat="50.55010" lon="5.59842" />
+ <trkpt lat="50.54989" lon="5.59921" />
+ <cmt>Laiterie du Boubou</cmt>
+ <trkpt lat="50.54962" lon="5.59861" />
+ <trkpt lat="50.55057" lon="5.60105" />
+ <trkpt lat="50.55043" lon="5.60133" />
+ <trkpt lat="50.55008" lon="5.60149" />
+ <trkpt lat="50.54997" lon="5.60183" />
+ <trkpt lat="50.5501" lon="5.6036" />
+ <trkpt lat="50.5502" lon="5.6046" />
+ <trkpt lat="50.5506" lon="5.6063" />
+ <trkpt lat="50.5509" lon="5.6085" />
+ <trkpt lat="50.5511" lon="5.6104" />
+ <trkpt lat="50.5510" lon="5.6110" />
+ <trkpt lat="50.5505" lon="5.6120" />
+ <trkpt lat="50.5488" lon="5.6083" />
+ <trkpt lat="50.5483" lon="5.6067" />
+ <trkpt lat="50.5482" lon="5.6054" />
+ <trkpt lat="50.5478" lon="5.6050" />
+ <trkpt lat="50.5477" lon="5.6039" />
+ <trkpt lat="50.5474" lon="5.6030" />
+ <trkpt lat="50.5469" lon="5.6025" />
+ <trkpt lat="50.5467" lon="5.6021" />
+ <trkpt lat="50.5466" lon="5.6015" />
+ <trkpt lat="50.5467" lon="5.5992" />
+ <trkpt lat="50.5472" lon="5.5978" />
+ <trkpt lat="50.5467" lon="5.5970" />
+ <trkpt lat="50.5467" lon="5.5958" />
+ <trkpt lat="50.5470" lon="5.5943" />
+ <trkpt lat="50.5471" lon="5.5931" />
+ <trkpt lat="50.5475" lon="5.5913" />
+ <trkpt lat="50.5474" lon="5.5908" />
+ </trkseg>
+
+ <trkseg>  
+ <name>Côte de la Roche-aux-faucons</name>
+ <desc>Côte à 9,9 % sur le parcours de la course cycliste « Liège-Bastogne-Liège »</desc>
+ <cmt>vert mer</cmt>
+ <trkpt lat="50.5413" lon="5.5782" />
+ <trkpt lat="50.5416" lon="5.5780" />
+ <trkpt lat="50.5419" lon="5.5782" />
+ <trkpt lat="50.5422" lon="5.5789" />
+ <trkpt lat="50.5424" lon="5.5788" />
+ <trkpt lat="50.5426" lon="5.5793" />
+ <trkpt lat="50.5430" lon="5.5802" />
+ <trkpt lat="50.5438" lon="5.5816" />
+ <trkpt lat="50.5442" lon="5.5818" />
+ <trkpt lat="50.5445" lon="5.5818" />
+ <trkpt lat="50.5448" lon="5.5816" />
+ <trkpt lat="50.5453" lon="5.5808" />
+ <trkpt lat="50.5459" lon="5.5804" />
+ <trkpt lat="50.5463" lon="5.5804" />
+ <trkpt lat="50.5466" lon="5.5801" />
+ <trkpt lat="50.5468" lon="5.5797" />
+ <trkpt lat="50.5471" lon="5.5790" />
+ <trkpt lat="50.5477" lon="5.5781" />
+ <trkpt lat="50.5487" lon="5.5771" />
+ <trkpt lat="50.5490" lon="5.5767" />
+ <trkpt lat="50.5494" lon="5.5753" />
+ <trkpt lat="50.5501" lon="5.5740" />
+ <trkpt lat="50.5505" lon="5.5722" />
+ <trkpt lat="50.5514" lon="5.5707" />
+ <trkpt lat="50.5517" lon="5.5700" />
+ <trkpt lat="50.5527" lon="5.5696" />
+ <trkpt lat="50.5532" lon="5.5681" />
+ <trkpt lat="50.5532" lon="5.5668" />
+ <trkpt lat="50.5534" lon="5.5656" />
+ <trkpt lat="50.5535" lon="5.5647" />
+ <trkpt lat="50.5532" lon="5.5620" />
+ <trkpt lat="50.5535" lon="5.5611" />
+ <trkpt lat="50.5536" lon="5.5595" />
+ <trkpt lat="50.5536" lon="5.5589" />
+ <trkpt lat="50.5537" lon="5.5581" />
+ <trkpt lat="50.5536" lon="5.5573" />
+ </trkseg>
+
+ <trkseg>  
+ <name>Côte de Cortil</name>
+ <desc>Côte à 6,2 % sur le parcours de la course cycliste « Tilff-Bastogne-Tilff »</desc>
+ <cmt>brun</cmt>
+ <trkpt lat="50.5679" lon="5.5825" />
+ <trkpt lat="50.5670" lon="5.5835" />
+ <trkpt lat="50.5662" lon="5.5823" />
+ <trkpt lat="50.5660" lon="5.5826" />
+ <trkpt lat="50.5660" lon="5.5837" />
+ <trkpt lat="50.5664" lon="5.5864" />
+ <trkpt lat="50.5664" lon="5.5871" />
+ <trkpt lat="50.5649" lon="5.5897" />
+ <trkpt lat="50.5644" lon="5.5898" />
+ <trkpt lat="50.5631" lon="5.5894" />
+ <trkpt lat="50.5625" lon="5.5925" />
+ <trkpt lat="50.5636" lon="5.5959" />
+ <trkpt lat="50.5637" lon="5.5976" />
+ <trkpt lat="50.5633" lon="5.5977" />
+ <trkpt lat="50.5628" lon="5.5972" />
+ <trkpt lat="50.5624" lon="5.5974" />
+ <trkpt lat="50.5623" lon="5.5983" />
+ <trkpt lat="50.5631" lon="5.6006" />
+ <trkpt lat="50.5637" lon="5.6012" />
+ <trkpt lat="50.5645" lon="5.6029" />
+ <trkpt lat="50.5645" lon="5.6053" />
+ <trkpt lat="50.5666" lon="5.6115" />
+ </trkseg>
+
+ </trk>
+ </gpx>

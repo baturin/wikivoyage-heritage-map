@@ -1,0 +1,43 @@
+<?php
+// version 2015-09-17
+//französisch
+$trans = array(
+  '{Masque de Carte' => '{mapmask',
+  '{Marqueur' => '{listing',
+  '{Sortir' => '{drink',
+  '{Acheter' => '{buy',
+  '{Manger' => '{eat',
+  '{Voir' => '{see',
+  '{Faire' => '{do',
+  '{Se loger' => '{sleep',
+  '{Aller' => '{go',
+  '{Circuler' => '{around',
+  '{Destination' => '{vicinity',
+  '{Ville' => '{city',
+  '{Représentation diplomatique' => '{diplo',
+  '|Sortir' => '|drink',
+  '|Acheter' => '|buy',
+  '|Manger' => '|eat',
+  '|Voir' => '|see',
+  '|Faire' => '|do',
+  '|Se loger' => '|sleep',
+  '|Aller' => '|go',
+  'nom=' => 'name=',
+  'numéro POI=' => 'map=',
+  'image POI=' => 'image=',
+  'latitude=' => 'lat=',
+  'longitude=' => 'long=',
+  '=Sortir' => '=drink',
+  '=Acheter' => '=buy',
+  '=Manger' => '=eat',
+  '=Voir' => '=see',
+  '=Faire' => '=do',
+  '=Se loger' => '=sleep',
+  '=Aller' => '=go',
+  '=Circuler' => '=around',
+  '=Destination' => '=vicinity',
+  '=Ville' => '=city',
+  '=Représentation diplomatique' => '=diplo',
+  '{{Site UNESCO' => '{{Site UNESCO}}'
+);
+?>
