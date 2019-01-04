@@ -187,6 +187,31 @@ class ArrayUtils
 
         return $defaultValue;
     }
+
+    public static function getNonEmptyStringValue($array, $key)
+    {
+        if (isset($array[$key])) {
+            $value = (string)$array[$key];
+            if ($value !== '') {
+                return $value;
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+}
+
+function getImageStorageUrl($image) {
+    $image = str_replace(' ', '_', $image);
+
+    if (substr($image,1,1) === '/') {
+        return $image;
+    }
+
+    $md5 = md5($image);
+    return substr($md5,0,1) . "/" . substr($md5,0,2) . "/" . $image;
 }
 
 $wikivoyagePageReader = new WikivoyagePageReader();
@@ -280,10 +305,21 @@ foreach ($templateReader->read(['monument', 'natural monument'], $content) as $m
     if (isset($monument['boundary-page'])) {
         $boundaryData = $boundaryPageReader->read($monument['boundary-page']);
         if ($boundaryData) {
-            $boundaries[] = $boundaryData;
+            $name = ArrayUtils::getNonEmptyStringValue($monument, 'name');
+            $image = ArrayUtils::getNonEmptyStringValue($monument, 'image');
+            if (!is_null($image)) {
+                $image = getImageStorageUrl($image);
+            }
+
+            $boundaries[] = [
+                'name' => $name,
+                'image' => $image,
+                'coordinates' => $boundaryData,
+            ];
         }
     }
 }
+
 
 $monumentTitleParams = new MonumentTitleMapParams($content);
 
@@ -411,36 +447,102 @@ map.addLayer(mapLayer);
 
 // Layer monuments
 var monuments = new L.featureGroup();
-var mi=1;
-while(mi < jsmax){
-  if (jsx[mi] != "0"){
-    var tooltip = jsn[mi].replace('<br />','');
-    var imgurl = '"https://ru.m.wikivoyage.org/wiki/File:' + jsf[mi].substr(5) + '"';
+var markerIndex = 1;
+
+while(markerIndex < jsmax){
+  if (jsx[markerIndex] != "0"){
+    var tooltip = jsn[markerIndex].replace('<br />','');
+    var imageUrl = '"https://ru.m.wikivoyage.org/wiki/File:' + jsf[markerIndex].substr(5) + '"';
+
     // no image
-    if (jsf[mi] == "0/01/no"){
-      var content = jsn[mi];
-      var minw = 10;
-      var maxw = 240;
+    if (jsf[markerIndex] === "0/01/no"){
+      var popupContent = jsn[markerIndex];
+      var popupMinWidth = 10;
+      var popupMaxWidth = 240;
     }
     // with image
     else {
-      var content = '<a href = ' + imgurl + '><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/' + jsf[mi] + '/120px-' + jsf[mi].substr(5) + '" width="120" onerror="imgError(this);"></a><br />' + jsn[mi] + '&nbsp;<a href = ' + imgurl + '><img src="./lib/images/magnify-clip.png" widht="15" height="11" title="⇱⇲">';
-      var minw = 120;
-      var maxw = 120;
+      var popupContent = '<a href = ' + imageUrl + '><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/' + jsf[markerIndex] + '/120px-' + jsf[markerIndex].substr(5) + '" width="120" onerror="imgError(this);"></a><br />' + jsn[markerIndex] + '&nbsp;<a href = ' + imageUrl + '><img src="./lib/images/magnify-clip.png" widht="15" height="11" title="⇱⇲">';
+      var popupMinWidth = 120;
+      var popupMaxWidth = 120;
     }
-    var zio = 1000 - (mi * 2);
-    var myIcon = L.icon({iconUrl: "./ico24/" + "mon-" + jsc[mi] + ".png", iconAnchor: [12, 12], popupAnchor: [0, -12]});
-    var marker = L.marker([jsx[mi], jsy[mi]], {title: tooltip, zIndexOffset: zio, icon: myIcon}).bindPopup(content,{minWidth:minw, maxWidth:maxw}).addTo(monuments);
+
+    var zIndexOffset = 1000 - (markerIndex * 2);
+    var markerIcon = L.icon({
+        iconUrl: "./ico24/" + "mon-" + jsc[markerIndex] + ".png",
+        iconAnchor: [12, 12],
+        popupAnchor: [0, -12]
+    });
+
+    var markerCoordinates = [
+        jsx[markerIndex],
+        jsy[markerIndex]
+    ];
+    var markerProps = {
+        title: tooltip,
+        zIndexOffset: zIndexOffset,
+        icon: markerIcon
+    };
+    var marker = L.marker(markerCoordinates, markerProps);
+    var popupProps = {minWidth: popupMinWidth, maxWidth: popupMaxWidth};
+    marker.bindPopup(popupContent, popupProps);
+    marker.addTo(monuments);
   }
-  mi++;
+
+  markerIndex++;
 }
+
 map.addLayer(monuments);
+
 if (wikidataBoundariesGeoJson) {
     L.geoJSON(wikidataBoundariesGeoJson).addTo(map);
 }
 
+function imagePopupContent(name, image) {
+    if (name === null) {
+        name = '';
+    }
+
+    var imageUrl = '"https://ru.m.wikivoyage.org/wiki/File:' + image.substr(5) + '"';
+    return '<a href = ' + imageUrl + '><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/' + image + '/120px-' + image.substr(5) + '" width="120" onerror="imgError(this);"></a><br />' + name + '&nbsp;<a href = ' + imageUrl + '><img src="./lib/images/magnify-clip.png" widht="15" height="11" title="⇱⇲">';
+}
+
+function getPopupContent(name, image) {
+    if (image !== null) {
+        return imagePopupContent(name, image);
+    } else if (name !== null) {
+        return name;
+    } else {
+        return null;
+    }
+}
+
+function bindPopup(leafletObject, name, image) {
+    var popupContent = getPopupContent(name, image);
+    if (popupContent !== null) {
+        var popupMinWidth = 10;
+        var popupMaxWidth = 240;
+
+        if (image !== null) {
+            popupMinWidth = 120;
+            popupMaxWidth = 120;
+        }
+
+        var popupProps = {minWidth: popupMinWidth, maxWidth: popupMaxWidth};
+
+        leafletObject.bindPopup(popupContent, popupProps);
+    }
+}
+
 boundaries.forEach(function(boundary) {
-    L.polygon(boundary).addTo(map);
+    var coordinates = boundary['coordinates'];
+    var name = boundary['name'];
+    var image = boundary['image'];
+    var polygon = L.polygon(coordinates);
+
+    bindPopup(polygon, name, image);
+
+    polygon.addTo(map);
 });
 
 if (jslayer.indexOf("X") != -1) {
