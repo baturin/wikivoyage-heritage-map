@@ -341,6 +341,10 @@ foreach ($monuments as $monument) {
 
 $wikidataIds = [];
 foreach ($monuments as $monument) {
+    if (isset($monument['boundary-wdid-skip']) && $monument['boundary-wdid-skip'] === 'yes') {
+        continue;
+    }
+
     if (isset($monument['wdid'])) {
         $wikidataIds[] = $monument['wdid'];
     }
@@ -360,6 +364,10 @@ foreach ($monuments as $monument) {
 $wikidataBoundaries = $wikimediaMapsReader->getPolygonsForWikidataIds($wikidataIds);
 foreach ($wikidataBoundaries as $wdid => $boundaryInfo) {
     foreach ($monumentsByWikidataIds[$wdid] as $monument) {
+        if (isset($monument['boundary-wdid-skip']) && $monument['boundary-wdid-skip'] === 'yes') {
+            continue;
+        }
+
         $name = ArrayUtils::getNonEmptyStringValue($monument, 'name');
         $image = ArrayUtils::getNonEmptyStringValue($monument, 'image');
         if (!is_null($image)) {
