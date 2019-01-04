@@ -42,12 +42,12 @@ class RequestParameters
 
     public function getLat()
     {
-        return (float)$_GET['lat'];
+        return isset($_GET['lat']) ? (float)$_GET['lat'] : null;
     }
 
     public function getLon()
     {
-        return (float)$_GET['lon'];
+        return isset($_GET['lon']) ? (float)$_GET['lon'] : null;
     }
 
     public function getLayer()
@@ -57,7 +57,96 @@ class RequestParameters
 
     public function getZoom()
     {
-        return (int)$_GET["zoom"];
+        return isset($_GET["zoom"]) ? (int)$_GET["zoom"] : null;
+    }
+}
+
+class TemplateReader
+{
+    public function read($templateName, $wikitext)
+    {
+        $listingsData = [];
+
+        foreach ($this->getTemplateWikitexts($templateName, $wikitext) as $templateWikitext) {
+            $listingsData[] = $this->parseTemplateWikitext($templateWikitext);
+        }
+
+        return $listingsData;
+    }
+
+    private function getTemplateWikitexts($templateName, $wikitext)
+    {
+        $templateWikitexts = [];
+
+        $matchResult = preg_match_all(
+            '/\\{\\{\s*(' . preg_quote(strtolower($templateName), '/') . ')(\s|\\|)/i',
+            $wikitext,
+            $matches,
+            PREG_OFFSET_CAPTURE
+        );
+        if ($matchResult) {
+            foreach ($matches[1] as $match) {
+                $position = $match[1];
+
+                $braceCount = 2;
+                $endIndex = null;
+
+                for ($i = $position; $i < strlen($wikitext); $i++) {
+                    $char = $wikitext[$i];
+                    if ($char === '{') {
+                        $braceCount++;
+                    } elseif ($char === '}') {
+                        $braceCount--;
+                    }
+
+                    if ($braceCount === 0) {
+                        $endIndex = $i;
+                        break;
+                    }
+                }
+
+                if (!is_null($endIndex)) {
+                    $templateWikitexts[] = substr($wikitext, $position, $endIndex - $position - 1);
+                }
+            }
+        }
+
+        return $templateWikitexts;
+    }
+
+    private function parseTemplateWikitext($wikitext)
+    {
+        $templateData = [];
+
+        $templateItems = explode('|', $wikitext);
+        array_shift($templateItems); // throw away template name itself
+
+        foreach ($templateItems as $templateItem) {
+            $items = explode('=', $templateItem, 2);
+            $key = $items[0];
+            $value = isset($items[1]) ? $items[1] : '';
+
+            $key = trim($key);
+            $value = trim($value);
+
+            $templateData[$key] = $value;
+        }
+
+        return $templateData;
+    }
+}
+
+class ArrayUtils
+{
+    public static function getFirstNotNullValue($values, $defaultValue)
+    {
+        foreach ($values as $value) {
+            if (!is_null($value)) {
+                return $value;
+            }
+        }
+
+        return $defaultValue;
     }
 }
 
@@ -99,9 +188,55 @@ License:
 
 <?php
 
+class MonumentTitleMapParams
+{
+    private $lat;
+
+    private $lon;
+
+    private $zoom;
+
+    public function __construct($wikitext)
+    {
+        $this->lat = null;
+        $this->lon = null;
+        $this->zoom = null;
+
+        $templateReader = new TemplateReader();
+        $monumentTitleDatas = $templateReader->read('monument-title/nature', $wikitext);
+
+        if (isset($monumentTitleDatas[0])) {
+            $firstMonumentTitleData = $monumentTitleDatas[0];
+            $this->lat = (float)$firstMonumentTitleData['lat'];
+            $this->lon = (float)$firstMonumentTitleData['long'];
+            $this->zoom = (int)$firstMonumentTitleData['zoom'];
+        }
+    }
+
+    public function getLat()
+    {
+        return $this->lat;
+    }
+
+    public function getLon()
+    {
+        return $this->lon;
+    }
+
+    public function getZoom()
+    {
+        return $this->zoom;
+    }
+}
 
 $file = str_replace("\'","'", $requestParameters->getName());
 $content = $wikivoyagePageReader->read($file);
+
+$monumentTitleParams = new MonumentTitleMapParams($content);
+
+$mapLat = ArrayUtils::getFirstNotNullValue([$requestParameters->getLat(), $monumentTitleParams->getLat()], 0);
+$mapLong = ArrayUtils::getFirstNotNullValue([$requestParameters->getLon(), $monumentTitleParams->getLon()], 0);
+$mapZoom = ArrayUtils::getFirstNotNullValue([$requestParameters->getZoom(), $monumentTitleParams->getZoom()], 14);
 
 // Strip comments
 $content = preg_replace('/<!--(.|\s)*?-->/', '', $content); 
@@ -171,9 +306,9 @@ function onMapClick(e) {
 }
 
 // All arrays to js
-var jslat = <?php echo json_encode($requestParameters->getLat() ?: 0);?>;
-var jslon = <?php echo json_encode($requestParameters->getLon() ?: 0); ?>;
-var jszoom = <?php echo json_encode($requestParameters->getZoom() ?: 14); ?>;
+var jslat = <?php echo json_encode($mapLat); ?>;
+var jslon = <?php echo json_encode($mapLong); ?>;
+var jszoom = <?php echo json_encode($mapZoom); ?>;
 var autozoom = "no";
 if (jszoom === "auto") {
  autozoom = "yes";
