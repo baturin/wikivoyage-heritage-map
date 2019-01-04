@@ -587,7 +587,7 @@ boundaries.forEach(function(boundary) {
     var coordinates = boundary['coordinates'];
     var name = boundary['name'];
     var image = boundary['image'];
-    var polygon = L.polygon(coordinates);
+    var polygon = L.polygon(coordinates, {weight: 1});
 
     bindPopup(polygon, name, image);
 
