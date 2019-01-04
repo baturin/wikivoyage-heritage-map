@@ -136,6 +136,34 @@ class TemplateReader
     }
 }
 
+class BoundaryPageReader
+{
+    public function read($pageName)
+    {
+        $wikivoyagePageReader = new WikivoyagePageReader();
+        $pageContents = $wikivoyagePageReader->read($pageName);
+        $pageContents = $this->stripNoinclude($pageContents);
+        $data = json_decode($pageContents, true);
+        return $this->swapLatLong($data);
+    }
+
+    private function stripNoinclude($pageContents)
+    {
+        return preg_replace(
+            '#' . preg_quote('<noinclude>') . '.*?' . preg_quote('</noinclude>') . '#ms',
+            '',
+            $pageContents
+        );
+    }
+
+    private function swapLatLong($data)
+    {
+        return array_map(function($item) {
+            return [$item[1], $item[0]];
+        }, $data);
+    }
+}
+
 class ArrayUtils
 {
     public static function getFirstNotNullValue($values, $defaultValue)
@@ -232,6 +260,20 @@ class MonumentTitleMapParams
 $file = str_replace("\'","'", $requestParameters->getName());
 $content = $wikivoyagePageReader->read($file);
 
+$boundaries = [];
+
+$templateReader = new TemplateReader();
+$boundaryPageReader = new BoundaryPageReader();
+
+foreach ($templateReader->read('monument', $content) as $monument) {
+    if (isset($monument['boundary-page'])) {
+        $boundaryData = $boundaryPageReader->read($monument['boundary-page']);
+        if ($boundaryData) {
+            $boundaries[] = $boundaryData;
+        }
+    }
+}
+
 $monumentTitleParams = new MonumentTitleMapParams($content);
 
 $mapLat = ArrayUtils::getFirstNotNullValue([$requestParameters->getLat(), $monumentTitleParams->getLat()], 0);
@@ -309,6 +351,7 @@ function onMapClick(e) {
 var jslat = <?php echo json_encode($mapLat); ?>;
 var jslon = <?php echo json_encode($mapLong); ?>;
 var jszoom = <?php echo json_encode($mapZoom); ?>;
+var boundaries = <?php echo json_encode($boundaries); ?>;
 var autozoom = "no";
 if (jszoom === "auto") {
  autozoom = "yes";
@@ -384,6 +427,10 @@ map.addLayer(monuments);
 if (wikidataBoundariesGeoJson) {
     L.geoJSON(wikidataBoundariesGeoJson).addTo(map);
 }
+
+boundaries.forEach(function(boundary) {
+    L.polygon(boundary).addTo(map);
+});
 
 if (jslayer.indexOf("X") != -1) {
   var redIcon = L.icon({iconUrl: './ico24/target.png', iconSize: [32,32], iconAnchor: [16,16]});
