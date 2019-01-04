@@ -63,23 +63,34 @@ class RequestParameters
 
 class TemplateReader
 {
-    public function read($templateName, $wikitext)
+    public function read($templateNames, $wikitext)
     {
+        if (empty($templateNames)) {
+            throw new Exception('Template names list is empty');
+        }
+
         $listingsData = [];
 
-        foreach ($this->getTemplateWikitexts($templateName, $wikitext) as $templateWikitext) {
+        foreach ($this->getTemplateWikitexts($templateNames, $wikitext) as $templateWikitext) {
             $listingsData[] = $this->parseTemplateWikitext($templateWikitext);
         }
 
         return $listingsData;
     }
 
-    private function getTemplateWikitexts($templateName, $wikitext)
+    private function getTemplateWikitexts($templateNames, $wikitext)
     {
         $templateWikitexts = [];
 
+        $templateNamesStr = implode(
+            '|',
+            array_map(function($templateName) {
+                return preg_quote(strtolower($templateName), '/');
+            }, $templateNames)
+        );
+
         $matchResult = preg_match_all(
-            '/\\{\\{\s*(' . preg_quote(strtolower($templateName), '/') . ')(\s|\\|)/i',
+            '/\\{\\{\s*(' . $templateNamesStr . ')(\s|\\|)/i',
             $wikitext,
             $matches,
             PREG_OFFSET_CAPTURE
@@ -231,7 +242,7 @@ class MonumentTitleMapParams
         $this->zoom = null;
 
         $templateReader = new TemplateReader();
-        $monumentTitleDatas = $templateReader->read('monument-title/nature', $wikitext);
+        $monumentTitleDatas = $templateReader->read(['monument-title', 'monument-title/nature'], $wikitext);
 
         if (isset($monumentTitleDatas[0])) {
             $firstMonumentTitleData = $monumentTitleDatas[0];
@@ -265,7 +276,7 @@ $boundaries = [];
 $templateReader = new TemplateReader();
 $boundaryPageReader = new BoundaryPageReader();
 
-foreach ($templateReader->read('monument', $content) as $monument) {
+foreach ($templateReader->read(['monument', 'natural monument'], $content) as $monument) {
     if (isset($monument['boundary-page'])) {
         $boundaryData = $boundaryPageReader->read($monument['boundary-page']);
         if ($boundaryData) {
