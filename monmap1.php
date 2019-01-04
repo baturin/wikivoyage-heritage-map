@@ -19,17 +19,31 @@ class WikimediaMapsReader
      * @param string[] $wikidataIds
      * @return array|null
      */
-    public function getGeoJSONForWikidataIds($wikidataIds)
+    public function getPolygonsForWikidataIds($wikidataIds)
     {
-        $geoJsonData = null;
+        $result = null;
 
         if (count($wikidataIds) > 0) {
             $url = 'https://maps.wikimedia.org/geoshape?getgeojson=1&ids=' . implode(',', $wikidataIds);
             $geoJsonStr = file_get_contents($url);
             $geoJsonData = json_decode($geoJsonStr, true);
+
+            foreach ($geoJsonData['features'] as $item) {
+                $wdid = $item['id'];
+                $polygons = $item['geometry']['coordinates'];
+
+                if ($item['geometry']['type'] === 'MultiPolygon') {
+                    $result[$wdid] = [];
+                    foreach ($polygons as $polygon1) {
+                        foreach ($polygon1 as $polygon2) {
+                            $result[$wdid][] = GeoUtils::swapLatLong($polygon2);
+                        }
+                    }
+                }
+            }
         }
 
-        return $geoJsonData;
+        return $result;
     }
 }
 
@@ -147,6 +161,16 @@ class TemplateReader
     }
 }
 
+class GeoUtils
+{
+    public static function swapLatLong($data)
+    {
+        return array_map(function($item) {
+            return [$item[1], $item[0]];
+        }, $data);
+    }
+}
+
 class BoundaryPageReader
 {
     public function read($pageName)
@@ -155,7 +179,7 @@ class BoundaryPageReader
         $pageContents = $wikivoyagePageReader->read($pageName);
         $pageContents = $this->stripNoinclude($pageContents);
         $data = json_decode($pageContents, true);
-        return $this->swapLatLong($data);
+        return GeoUtils::swapLatLong($data);
     }
 
     private function stripNoinclude($pageContents)
@@ -165,13 +189,6 @@ class BoundaryPageReader
             '',
             $pageContents
         );
-    }
-
-    private function swapLatLong($data)
-    {
-        return array_map(function($item) {
-            return [$item[1], $item[0]];
-        }, $data);
     }
 }
 
@@ -301,7 +318,9 @@ $boundaries = [];
 $templateReader = new TemplateReader();
 $boundaryPageReader = new BoundaryPageReader();
 
-foreach ($templateReader->read(['monument', 'natural monument'], $content) as $monument) {
+$monuments = $templateReader->read(['monument', 'natural monument'], $content);
+
+foreach ($monuments as $monument) {
     if (isset($monument['boundary-page'])) {
         $boundaryData = $boundaryPageReader->read($monument['boundary-page']);
         if ($boundaryData) {
@@ -311,6 +330,43 @@ foreach ($templateReader->read(['monument', 'natural monument'], $content) as $m
                 $image = getImageStorageUrl($image);
             }
 
+            $boundaries[] = [
+                'name' => $name,
+                'image' => $image,
+                'coordinates' => $boundaryData,
+            ];
+        }
+    }
+}
+
+$wikidataIds = [];
+foreach ($monuments as $monument) {
+    if (isset($monument['wdid'])) {
+        $wikidataIds[] = $monument['wdid'];
+    }
+}
+
+$monumentsByWikidataIds = [];
+foreach ($monuments as $monument) {
+    if (isset($monument['wdid']) && $monument['wdid'] !== '') {
+        $wdid = $monument['wdid'];
+        if (!isset($monumentsByWikidataIds[$wdid])) {
+            $monumentsByWikidataIds[$wdid] = [];
+        }
+        $monumentsByWikidataIds[$wdid][] = $monument;
+    }
+}
+
+$wikidataBoundaries = $wikimediaMapsReader->getPolygonsForWikidataIds($wikidataIds);
+foreach ($wikidataBoundaries as $wdid => $boundaryInfo) {
+    foreach ($monumentsByWikidataIds[$wdid] as $monument) {
+        $name = ArrayUtils::getNonEmptyStringValue($monument, 'name');
+        $image = ArrayUtils::getNonEmptyStringValue($monument, 'image');
+        if (!is_null($image)) {
+            $image = getImageStorageUrl($image);
+        }
+
+        foreach ($boundaryInfo as $boundaryData) {
             $boundaries[] = [
                 'name' => $name,
                 'image' => $image,
@@ -366,8 +422,6 @@ for($i=1; $i < $total; $i++){
   }
 }
 
-$wikidataBoundaries = $wikimediaMapsReader->getGeoJSONForWikidataIds($wikidataIds);
-
 $max = $i;
 
 ?>
@@ -420,7 +474,6 @@ var jsx =   <?php echo json_encode($x); ?>; // lat
 var jsy =   <?php echo json_encode($y); ?>; // long
 var jsn =   <?php echo json_encode($n); ?>; // name
 var jsf =   <?php echo json_encode($f); ?>; // image
-var wikidataBoundariesGeoJson = <?php echo json_encode($wikidataBoundaries); ?>;
 
 // Make map 
 var map = new L.Map('map', {center: new L.LatLng(jslat,jslon), zoom: jszoom, zoomControl: false});
@@ -493,10 +546,6 @@ while(markerIndex < jsmax){
 }
 
 map.addLayer(monuments);
-
-if (wikidataBoundariesGeoJson) {
-    L.geoJSON(wikidataBoundariesGeoJson).addTo(map);
-}
 
 function imagePopupContent(name, image) {
     if (name === null) {
