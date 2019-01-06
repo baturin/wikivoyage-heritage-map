@@ -13,40 +13,6 @@ class WikivoyagePageReader
     }
 }
 
-class WikimediaMapsReader
-{
-    /**
-     * @param string[] $wikidataIds
-     * @return array|null
-     */
-    public function getPolygonsForWikidataIds($wikidataIds)
-    {
-        $result = null;
-
-        if (count($wikidataIds) > 0) {
-            $url = 'https://maps.wikimedia.org/geoshape?getgeojson=1&ids=' . implode(',', $wikidataIds);
-            $geoJsonStr = file_get_contents($url);
-            $geoJsonData = json_decode($geoJsonStr, true);
-
-            foreach ($geoJsonData['features'] as $item) {
-                $wdid = $item['id'];
-                $polygons = $item['geometry']['coordinates'];
-
-                if ($item['geometry']['type'] === 'MultiPolygon') {
-                    $result[$wdid] = [];
-                    foreach ($polygons as $polygon1) {
-                        foreach ($polygon1 as $polygon2) {
-                            $result[$wdid][] = GeoUtils::swapLatLong($polygon2);
-                        }
-                    }
-                }
-            }
-        }
-
-        return $result;
-    }
-}
-
 class RequestParameters
 {
     public function getName()
@@ -171,27 +137,6 @@ class GeoUtils
     }
 }
 
-class BoundaryPageReader
-{
-    public function read($pageName)
-    {
-        $wikivoyagePageReader = new WikivoyagePageReader();
-        $pageContents = $wikivoyagePageReader->read($pageName);
-        $pageContents = $this->stripNoinclude($pageContents);
-        $data = json_decode($pageContents, true);
-        return GeoUtils::swapLatLong($data);
-    }
-
-    private function stripNoinclude($pageContents)
-    {
-        return preg_replace(
-            '#' . preg_quote('<noinclude>') . '.*?' . preg_quote('</noinclude>') . '#ms',
-            '',
-            $pageContents
-        );
-    }
-}
-
 class ArrayUtils
 {
     public static function getFirstNotNullValue($values, $defaultValue)
@@ -220,19 +165,7 @@ class ArrayUtils
     }
 }
 
-function getImageStorageUrl($image) {
-    $image = str_replace(' ', '_', $image);
-
-    if (substr($image,1,1) === '/') {
-        return $image;
-    }
-
-    $md5 = md5($image);
-    return substr($md5,0,1) . "/" . substr($md5,0,2) . "/" . $image;
-}
-
 $wikivoyagePageReader = new WikivoyagePageReader();
-$wikimediaMapsReader = new WikimediaMapsReader();
 $requestParameters = new RequestParameters();
 
 ?>
@@ -260,6 +193,7 @@ License:
   <div id="logo">
     <img src="./lib/images/logo.png" alt= "Logo" title= "Version 2016-07-13" width="64" height="64">
   </div>
+  <script type="text/javascript" src="./lib/jquery-3.3.1.min.js"></script>
   <script type="text/javascript" src="./lib/leaflet/leaflet.js"></script>
   <script type="text/javascript" src="./lib/buttons-new.js"></script>
   <script type="text/javascript" src="./lib/zoomdisplay.js"></script>
@@ -313,77 +247,7 @@ class MonumentTitleMapParams
 $file = str_replace("\'","'", $requestParameters->getName());
 $content = $wikivoyagePageReader->read($file);
 
-$boundaries = [];
-
 $templateReader = new TemplateReader();
-$boundaryPageReader = new BoundaryPageReader();
-
-$monuments = $templateReader->read(['monument', 'natural monument'], $content);
-
-foreach ($monuments as $monument) {
-    if (isset($monument['boundary-page'])) {
-        $boundaryData = $boundaryPageReader->read($monument['boundary-page']);
-        if ($boundaryData) {
-            $name = ArrayUtils::getNonEmptyStringValue($monument, 'name');
-            $image = ArrayUtils::getNonEmptyStringValue($monument, 'image');
-            if (!is_null($image)) {
-                $image = getImageStorageUrl($image);
-            }
-
-            $boundaries[] = [
-                'name' => $name,
-                'image' => $image,
-                'coordinates' => $boundaryData,
-            ];
-        }
-    }
-}
-
-$wikidataIds = [];
-foreach ($monuments as $monument) {
-    if (isset($monument['boundary-wdid-skip']) && $monument['boundary-wdid-skip'] === 'yes') {
-        continue;
-    }
-
-    if (isset($monument['wdid'])) {
-        $wikidataIds[] = $monument['wdid'];
-    }
-}
-
-$monumentsByWikidataIds = [];
-foreach ($monuments as $monument) {
-    if (isset($monument['wdid']) && $monument['wdid'] !== '') {
-        $wdid = $monument['wdid'];
-        if (!isset($monumentsByWikidataIds[$wdid])) {
-            $monumentsByWikidataIds[$wdid] = [];
-        }
-        $monumentsByWikidataIds[$wdid][] = $monument;
-    }
-}
-
-$wikidataBoundaries = $wikimediaMapsReader->getPolygonsForWikidataIds($wikidataIds);
-foreach ($wikidataBoundaries as $wdid => $boundaryInfo) {
-    foreach ($monumentsByWikidataIds[$wdid] as $monument) {
-        if (isset($monument['boundary-wdid-skip']) && $monument['boundary-wdid-skip'] === 'yes') {
-            continue;
-        }
-
-        $name = ArrayUtils::getNonEmptyStringValue($monument, 'name');
-        $image = ArrayUtils::getNonEmptyStringValue($monument, 'image');
-        if (!is_null($image)) {
-            $image = getImageStorageUrl($image);
-        }
-
-        foreach ($boundaryInfo as $boundaryData) {
-            $boundaries[] = [
-                'name' => $name,
-                'image' => $image,
-                'coordinates' => $boundaryData,
-            ];
-        }
-    }
-}
-
 
 $monumentTitleParams = new MonumentTitleMapParams($content);
 
@@ -421,13 +285,6 @@ for($i=1; $i < $total; $i++){
     $md5 = md5($f[$i]);
     $f[$i] = substr($md5,0,1) . "/" . substr($md5,0,2) . "/" . $f[$i];
   }
-
-  if (!is_null($wdid)) {
-      $wdid = trim($wdid);
-      if ($wdid !== '') {
-          $wikidataIds[] = $wdid;
-      }
-  }
 }
 
 $max = $i;
@@ -439,13 +296,13 @@ $max = $i;
   var lang = "ru";
   L.registerLocale(lang, mylocale);
   L.setLocale(lang);
-  
+
   maptiles();
-  
+
 function onAll() {
   map.setView([jslat,jslon],jszoom,true);
   map.fitBounds(monuments.getBounds());
-} 
+}
 
 function onMapClick(e) {
   var fmlat=e.latlng.lat.toFixed(5);
@@ -460,7 +317,6 @@ function onMapClick(e) {
 var jslat = <?php echo json_encode($mapLat); ?>;
 var jslon = <?php echo json_encode($mapLong); ?>;
 var jszoom = <?php echo json_encode($mapZoom); ?>;
-var boundaries = <?php echo json_encode($boundaries); ?>;
 var autozoom = "no";
 if (jszoom === "auto") {
  autozoom = "yes";
@@ -500,11 +356,11 @@ if (jslayer.indexOf("M") !== -1) {
 map.addLayer(mapLayer);
 
   // load local image
-  function imgError(image) {   
+  function imgError(image) {
     image.onerror = "";
     image.src = image.src.replace("wikipedia/commons","wikivoyage/ru");
     return true;
-  } 
+  }
 
 // Layer monuments
 var monuments = new L.featureGroup();
@@ -555,18 +411,17 @@ while(markerIndex < jsmax){
 
 map.addLayer(monuments);
 
-function imagePopupContent(name, image) {
+function imagePopupContent(name, imageUrl, imageThumb) {
     if (name === null) {
         name = '';
     }
 
-    var imageUrl = '"https://ru.m.wikivoyage.org/wiki/File:' + image.substr(5) + '"';
-    return '<a href = ' + imageUrl + '><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/' + image + '/120px-' + image.substr(5) + '" width="120" onerror="imgError(this);"></a><br />' + name + '&nbsp;<a href = ' + imageUrl + '><img src="./lib/images/magnify-clip.png" widht="15" height="11" title="⇱⇲">';
+    return '<a href = ' + imageUrl + '><img src="' + imageThumb + '" width="120" onerror="imgError(this);"></a><br />' + name + '&nbsp;<a href = ' + imageUrl + '><img src="./lib/images/magnify-clip.png" widht="15" height="11" title="⇱⇲">';
 }
 
-function getPopupContent(name, image) {
-    if (image !== null) {
-        return imagePopupContent(name, image);
+function getPopupContent(name, imageUrl, imageThumb) {
+    if (imageUrl !== null && imageThumb !== null) {
+        return imagePopupContent(name, imageUrl, imageThumb);
     } else if (name !== null) {
         return name;
     } else {
@@ -574,13 +429,13 @@ function getPopupContent(name, image) {
     }
 }
 
-function bindPopup(leafletObject, name, image) {
-    var popupContent = getPopupContent(name, image);
+function bindPopup(leafletObject, name, imageUrl, imageThumb) {
+    var popupContent = getPopupContent(name, imageUrl, imageThumb);
     if (popupContent !== null) {
         var popupMinWidth = 10;
         var popupMaxWidth = 240;
 
-        if (image !== null) {
+        if (imageThumb !== null && imageUrl !== null) {
             popupMinWidth = 120;
             popupMaxWidth = 120;
         }
@@ -590,17 +445,6 @@ function bindPopup(leafletObject, name, image) {
         leafletObject.bindPopup(popupContent, popupProps);
     }
 }
-
-boundaries.forEach(function(boundary) {
-    var coordinates = boundary['coordinates'];
-    var name = boundary['name'];
-    var image = boundary['image'];
-    var polygon = L.polygon(coordinates, {weight: 1});
-
-    bindPopup(polygon, name, image);
-
-    polygon.addTo(map);
-});
 
 if (jslayer.indexOf("X") != -1) {
   var redIcon = L.icon({iconUrl: './ico24/target.png', iconSize: [32,32], iconAnchor: [16,16]});
@@ -634,6 +478,31 @@ imgpath = './lib/images/';
 }
 var warning = 'url(' + imgpath + 'line.png) "' + L._('Content with {external} is hosted externally, so enabling it shares your data with other sites.',{external:' "url(' + imgpath + 'external.png)" '}) + '"';
 document.styleSheets[1].cssRules[4].style.content = warning;
+
+  $.ajax({
+      url: 'api.php',
+      data: $.param({
+          query: 'get-page-data',
+          page: <?php echo json_encode($requestParameters->getName()) ?>,
+          items: 'map-data,monuments',
+          fields: 'name,lat,long,image-thumb-120px,image-page-url,boundary-coordinates',
+          filter: 'able-to-display-on-map'
+      })
+  }).done(function(result) {
+      $.each(result.data.monuments, function(_, monument) {
+          window.console.log(monument);
+          $.each(monument['boundary-coordinates'], function (_, coordinates) {
+              window.console.log(coordinates);
+
+              var name = monument.name;
+              var polygon = L.polygon(coordinates, {weight: 1});
+
+              bindPopup(polygon, name, monument['image-page-url'], monument['image-thumb-120px']);
+
+              polygon.addTo(map);
+          });
+      });
+  });
 
 </script>
  
