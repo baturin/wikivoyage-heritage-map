@@ -12,4 +12,3 @@
 # TODO
 1. Skip comments when parsing templates.
 2. Filter list of monument types - to display image.
-3. Compose popup content using jQuery to avoid potential XSS.
