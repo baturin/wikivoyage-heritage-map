@@ -127,16 +127,6 @@ class TemplateReader
     }
 }
 
-class GeoUtils
-{
-    public static function swapLatLong($data)
-    {
-        return array_map(function($item) {
-            return [$item[1], $item[0]];
-        }, $data);
-    }
-}
-
 class ArrayUtils
 {
     public static function getFirstNotNullValue($values, $defaultValue)
@@ -148,20 +138,6 @@ class ArrayUtils
         }
 
         return $defaultValue;
-    }
-
-    public static function getNonEmptyStringValue($array, $key)
-    {
-        if (isset($array[$key])) {
-            $value = (string)$array[$key];
-            if ($value !== '') {
-                return $value;
-            } else {
-                return null;
-            }
-        } else {
-            return null;
-        }
     }
 }
 
@@ -255,40 +231,6 @@ $mapLat = ArrayUtils::getFirstNotNullValue([$requestParameters->getLat(), $monum
 $mapLong = ArrayUtils::getFirstNotNullValue([$requestParameters->getLon(), $monumentTitleParams->getLon()], 0);
 $mapZoom = ArrayUtils::getFirstNotNullValue([$requestParameters->getZoom(), $monumentTitleParams->getZoom()], 14);
 
-// Strip comments
-$content = preg_replace('/<!--(.|\s)*?-->/', '', $content); 
-
-// Strip blanks
-$content = str_ireplace(array('[[', ']]', '| ', ' |', '= ', ' =' ), array('', '', '|', '|', '=', '=' ),  $content);
-
-// translate
-$content= str_ireplace(array('Monument|', 'Natural monument|'), array('monument|', 'monument|'), $content);
-
-// strip unwanted templates
-$content = preg_replace("/{{(?!Monument\|)(.|\s)*?}}/im", "", $content); 
-
-// read parameters {{monument|
-$apart = explode('{{monument|', $content);
-$total = count($apart);
-
-for($i=1; $i < $total; $i++){
-  $text = explode('}}', $apart[$i]);
-  $part = str_replace('|', '&', $text[0]);
-  $name = $type = $lat = $long = $image = $wdid = '';
-  parse_str($part); 
-  $c[$i] = (trim($type)  ?: "other");
-  $x[$i] = (trim($lat)  + 0 ?: "0");
-  $y[$i] = (trim($long) + 0 ?: "0");
-  $n[$i] = (trim($name)  ?: "NoName");
-  $f[$i] = (str_replace(" ","_",trim($image)) ?: "0/01/no");
-  if (substr($f[$i],1,1) != "/") {
-    $md5 = md5($f[$i]);
-    $f[$i] = substr($md5,0,1) . "/" . substr($md5,0,2) . "/" . $f[$i];
-  }
-}
-
-$max = $i;
-
 ?>
 
 <script type='text/javascript'>
@@ -332,13 +274,6 @@ if (jslayer === "OX") {
   jslayer = "WX";
 }
 
-var jsmax = <?php echo $max; ?>;
-var jsc =   <?php echo json_encode($c); ?>; // type
-var jsx =   <?php echo json_encode($x); ?>; // lat
-var jsy =   <?php echo json_encode($y); ?>; // long
-var jsn =   <?php echo json_encode($n); ?>; // name
-var jsf =   <?php echo json_encode($f); ?>; // image
-
 // Make map 
 var map = new L.Map('map', {center: new L.LatLng(jslat,jslon), zoom: jszoom, zoomControl: false});
 var popup = L.popup();
@@ -364,50 +299,6 @@ map.addLayer(mapLayer);
 
 // Layer monuments
 var monuments = new L.featureGroup();
-var markerIndex = 1;
-
-while(markerIndex < jsmax){
-  if (jsx[markerIndex] != "0"){
-    var tooltip = jsn[markerIndex].replace('<br />','');
-    var imageUrl = '"https://ru.m.wikivoyage.org/wiki/File:' + jsf[markerIndex].substr(5) + '"';
-
-    // no image
-    if (jsf[markerIndex] === "0/01/no"){
-      var popupContent = jsn[markerIndex];
-      var popupMinWidth = 10;
-      var popupMaxWidth = 240;
-    }
-    // with image
-    else {
-      var popupContent = '<a href = ' + imageUrl + '><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/' + jsf[markerIndex] + '/120px-' + jsf[markerIndex].substr(5) + '" width="120" onerror="imgError(this);"></a><br />' + jsn[markerIndex] + '&nbsp;<a href = ' + imageUrl + '><img src="./lib/images/magnify-clip.png" widht="15" height="11" title="⇱⇲">';
-      var popupMinWidth = 120;
-      var popupMaxWidth = 120;
-    }
-
-    var zIndexOffset = 1000 - (markerIndex * 2);
-    var markerIcon = L.icon({
-        iconUrl: "./ico24/" + "mon-" + jsc[markerIndex] + ".png",
-        iconAnchor: [12, 12],
-        popupAnchor: [0, -12]
-    });
-
-    var markerCoordinates = [
-        jsx[markerIndex],
-        jsy[markerIndex]
-    ];
-    var markerProps = {
-        title: tooltip,
-        zIndexOffset: zIndexOffset,
-        icon: markerIcon
-    };
-    var marker = L.marker(markerCoordinates, markerProps);
-    var popupProps = {minWidth: popupMinWidth, maxWidth: popupMaxWidth};
-    marker.bindPopup(popupContent, popupProps);
-    marker.addTo(monuments);
-  }
-
-  markerIndex++;
-}
 
 map.addLayer(monuments);
 
@@ -485,16 +376,38 @@ document.styleSheets[1].cssRules[4].style.content = warning;
           query: 'get-page-data',
           page: <?php echo json_encode($requestParameters->getName()) ?>,
           items: 'map-data,monuments',
-          fields: 'name,lat,long,image-thumb-120px,image-page-url,boundary-coordinates',
+          fields: 'name,type,lat,long,image-thumb-120px,image-page-url,boundary-coordinates',
           filter: 'able-to-display-on-map'
       })
   }).done(function(result) {
       $.each(result.data.monuments, function(_, monument) {
-          window.console.log(monument);
-          $.each(monument['boundary-coordinates'], function (_, coordinates) {
-              window.console.log(coordinates);
+          var name = monument.name;
 
-              var name = monument.name;
+          if (monument['lat'] && monument['long']) {
+              var monumentType = monument['type'];
+              if (!monumentType) {
+                  monumentType = 'other';
+              }
+
+              var markerCoordinates = [monument['lat'], monument['long']];
+              var markerIcon = L.icon({
+                iconUrl: "./ico24/" + "mon-" + monumentType + ".png",
+                iconAnchor: [12, 12],
+                popupAnchor: [0, -12]
+              });
+
+              var markerProps = {
+                title: monument['name'],
+                icon: markerIcon
+              };
+              var marker = L.marker(markerCoordinates, markerProps);
+
+              bindPopup(marker, name, monument['image-page-url'], monument['image-thumb-120px']);
+
+              marker.addTo(monuments);
+          }
+
+          $.each(monument['boundary-coordinates'], function (_, coordinates) {
               var polygon = L.polygon(coordinates, {weight: 1});
 
               bindPopup(polygon, name, monument['image-page-url'], monument['image-thumb-120px']);
