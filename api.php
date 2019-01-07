@@ -210,12 +210,20 @@ class MonumentResult
 {
     private $result;
 
+    private $monumentType;
+
     private $monumentData;
 
-    public function __construct($monumentData)
+    public function __construct($monumentType, $monumentData)
     {
+        $this->monumentType = $monumentType;
         $this->monumentData = $monumentData;
         $this->result = [];
+    }
+
+    public function getMonumentType()
+    {
+        return $this->monumentType;
     }
 
     public function getMonumentField($fieldName)
@@ -297,6 +305,18 @@ function imageUrl($image)
     return str_replace(' ', '_', $image);
 }
 
+class StringUtils
+{
+    public static function nullStr($str)
+    {
+        if ($str === null) {
+            return '';
+        } else {
+            return (string)$str;
+        }
+    }
+}
+
 class Api
 {
     public function processRequest()
@@ -358,16 +378,22 @@ class Api
         ];
     }
 
+    const MONUMENT_TYPE_CULTURAL = 'cultural';
+    const MONUMENT_TYPE_NATURAL = 'natural';
+
     private function getMonuments(RequestParams $requestParams, $pageContents)
     {
         $templateReader = new TemplateReader();
 
-        $monuments = $templateReader->read(['monument', 'natural monument'], $pageContents);
-
         $result = [];
 
-        foreach ($monuments as $monument) {
-            $result[] = new MonumentResult($monument);
+        $culturalMonuments = $templateReader->read(['monument'], $pageContents);
+        foreach ($culturalMonuments as $monument) {
+            $result[] = new MonumentResult(self::MONUMENT_TYPE_CULTURAL, $monument);
+        }
+        $naturalMonuments = $templateReader->read(['natural monument'], $pageContents);
+        foreach ($naturalMonuments as $monument) {
+            $result[] = new MonumentResult(self::MONUMENT_TYPE_NATURAL, $monument);
         }
 
         foreach ($result as $resultItem) {
@@ -379,6 +405,10 @@ class Api
                     $field,
                     $resultItem->getMonumentField($field)
                 );
+            }
+
+            if (in_array('upload-link', $requestParams->getFields())) {
+                $this->readUploadLink($resultItem);
             }
         }
 
@@ -505,6 +535,191 @@ class Api
                 );
             }
         }
+    }
+
+    const NOUPLOAD_YES = 'yes';
+
+    const CAMPAIGN_WLM_RU = 'wlm-ru';
+    const CAMPAIGN_WLM_CRIMEA = 'wlm-crimea';
+    const CAMPAIGN_WLE_RU = 'wle-ru';
+    const CAMPAIGN_WLE_CRIMEA = 'wle-crimea';
+
+    private function getUploadCampaign(MonumentResult $monumentResult)
+    {
+        $campaign = null;
+
+        if ($monumentResult->getMonumentType() === self::MONUMENT_TYPE_CULTURAL) {
+            $region = StringUtils::nullStr($monumentResult->getMonumentField('region'));
+
+            $campaign = self::CAMPAIGN_WLM_RU;
+            if ($region === 'ru-km' || $region === 'ru-sev') {
+                $campaign = self::CAMPAIGN_WLM_CRIMEA;
+            }
+        } else if ($monumentResult->getMonumentType() === self::MONUMENT_TYPE_NATURAL) {
+            $knid = StringUtils::nullStr($monumentResult->getMonumentField('knid'));
+
+            $campaign = self::CAMPAIGN_WLE_RU;
+            if (substr($knid, 0, 2) == '82' || substr($knid, 0, 2) == '92') {
+                $campaign = self::CAMPAIGN_WLE_CRIMEA;
+            }
+        }
+
+        return $campaign;
+    }
+
+    private function readUploadLink(MonumentResult $monumentResult)
+    {
+        $noupload = $monumentResult->getMonumentField('noupload');
+        if ($noupload === self::NOUPLOAD_YES) {
+            $uploadLink = null;
+        } else {
+            $region = StringUtils::nullStr($monumentResult->getMonumentField('region'));
+            $name = StringUtils::nullStr($monumentResult->getMonumentField('name'));
+            $knid = StringUtils::nullStr($monumentResult->getMonumentField('knid'));
+            $uid = StringUtils::nullStr($monumentResult->getMonumentField('uid'));
+            $address = StringUtils::nullStr($monumentResult->getMonumentField('address'));
+            $municipality = StringUtils::nullStr($monumentResult->getMonumentField('municipality'));
+            $district = StringUtils::nullStr($monumentResult->getMonumentField('district'));
+            $commonscat = StringUtils::nullStr($monumentResult->getMonumentField('commonscat'));
+
+            $uploadCampaign = $this->getUploadCampaign($monumentResult);
+
+            if ($uploadCampaign !== null) {
+                $uploadDesc = str_replace('"', '', $name) . ': ';
+                if ($address !== '') {
+                    $uploadDesc .= $address . ', ';
+                }
+
+                if ($municipality !== '' && $municipality !== $district) {
+                    $uploadDesc .= $municipality . ', ';
+                }
+
+                if ($district !== '') {
+                    $uploadDesc .= $district . ', ';
+                }
+
+                $uploadDesc .= StringUtils::nullStr($this->getRegionName($region));
+
+                $urlParameters = [
+                    'title' => 'Special:UploadWizard',
+                    'campaign' => $uploadCampaign,
+                    'id' => $knid,
+                    'id2' => $uid,
+                    'description' => $uploadDesc,
+                    'categories' => $commonscat,
+                    'uselang' => 'ru',
+
+                ];
+
+                $uploadLink = 'http://commons.wikimedia.org/w/index.php?' . $this->encodeUrlParams($urlParameters);
+            } else {
+                $uploadLink = null;
+            }
+        }
+
+        $monumentResult->setResultField('upload-link', $uploadLink);
+    }
+
+    private function encodeUrlParams($params)
+    {
+        $items = [];
+        foreach ($params as $k => $v) {
+            $items[] = $k . '=' . urlencode($v);
+        }
+        return implode('&', $items);
+    }
+
+    private function getRegionName($regionCode)
+    {
+        $regionNames = [
+            "ru-ad" => "Адыгея",
+            'ru-ba' => 'Башкортостан',
+            'ru-bu' => 'Бурятия',
+            'ru-al' => 'Алтай',
+            'ru-da' => 'Дагестан',
+            'ru-in' => 'Ингушетия',
+            'ru-kb' => 'Кабардино-Балкария',
+            'ru-kl' => 'Калмыкия',
+            'ru-kc' => 'Карачаево-Черкесия',
+            'ru-krl' => 'Карелия',
+            'ru-ko' => 'Республика Коми',
+            'ru-me' => 'Марий Эл',
+            'ru-mo' => 'Мордовия',
+            'ru-sa' => 'Якутия (Саха)',
+            'ru-se' => 'Северная Осетия',
+            'ru-ta' => 'Татарстан',
+            'ru-ty' => 'Тува',
+            'ru-ud' => 'Удмуртия',
+            'ru-kk' => 'Хакасия',
+            'ru-ce' => 'Чеченская республика',
+            'ru-chv' => 'Чувашия',
+            'ru-alt' => 'Алтайский край',
+            'ru-kda' => 'Краснодарский край',
+            'ru-kya' => 'Красноярский край',
+            'ru-pri' => 'Приморский край',
+            'ru-sta' => 'Ставропольский край',
+            'ru-kha' => 'Хабаровский край',
+            'ru-amu' => 'Амурская область',
+            'ru-ark' => 'Архангельская область',
+            'ru-ast' => 'Астраханская область',
+            'ru-bel' => 'Белгородская область',
+            'ru-bry' => 'Брянская область',
+            'ru-vla' => 'Владимирская область',
+            'ru-vgg' => 'Волгоградская область',
+            'ru-vol' => 'Вологодская область',
+            'ru-vor' => 'Воронежская область',
+            'ru-iva' => 'Ивановская область',
+            'ru-irk' => 'Иркутская область',
+            'ru-kal' => 'Калининградская область',
+            'ru-klu' => 'Калужская область',
+            'ru-kam' => 'Камчатский край',
+            'ru-kem' => 'Кемеровская область',
+            'ru-kir' => 'Кировская область',
+            'ru-kos' => 'Костромская область',
+            'ru-kgn' => 'Курганская область',
+            'ru-krs' => 'Курская область',
+            'ru-len' => 'Ленинградская область',
+            'ru-lip' => 'Липецкая область',
+            'ru-mag' => 'Магаданская область',
+            'ru-mos' => 'Московская область',
+            'ru-mur' => 'Мурманская область',
+            'ru-niz' => 'Нижегородская область',
+            'ru-ngr' => 'Новгородская область',
+            'ru-nvs' => 'Новосибирская область',
+            'ru-oms' => 'Омская область',
+            'ru-ore' => 'Оренбургская область',
+            'ru-orl' => 'Орловская область',
+            'ru-pnz' => 'Пензенская область',
+            'ru-per' => 'Пермский край',
+            'ru-psk' => 'Псковская область',
+            'ru-ros' => 'Ростовская область',
+            'ru-rya' => 'Рязанская область',
+            'ru-sam' => 'Самарская область',
+            'ru-sar' => 'Саратовская область',
+            'ru-sak' => 'Сахалинская область',
+            'ru-sve' => 'Свердловская область',
+            'ru-smo' => 'Смоленская область',
+            'ru-tam' => 'Тамбовская область',
+            'ru-tve' => 'Тверская область',
+            'ru-tom' => 'Томская область',
+            'ru-tul' => 'Тульская область',
+            'ru-tyu' => 'Тюменская область',
+            'ru-uly' => 'Ульяновская область',
+            'ru-che' => 'Челябинская область',
+            'ru-zab' => 'Забайкальский край',
+            'ru-yar' => 'Ярославская область',
+            'ru-mow' => 'Москва',
+            'ru-spb' => 'Санкт-Петербург',
+            'ru-jew' => 'Еврейская автономная область',
+            'ru-km' => 'Крым',
+            'ru-nen' => 'Ненецкий автономный округ',
+            'ru-khm' => 'Ханты-Мансийский автономный округ',
+            'ru-chu' => 'Чукотский автономный округ',
+            'ru-yam' => 'Ямало-Ненецкий автономный округ',
+            'ru-sev' => 'Севастополь',
+        ];
+
+        return array_key_exists($regionCode, $regionNames) ? $regionNames[$regionCode] : null;
     }
 
     /**
