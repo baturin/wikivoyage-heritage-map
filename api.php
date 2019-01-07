@@ -432,6 +432,8 @@ class Api
         );
     }
 
+    const BOUNDARY_NO = 'no';
+
     /**
      * @param MonumentResult[] $resultItems
      */
@@ -442,22 +444,27 @@ class Api
         }
 
         foreach ($resultItems as $resultItem) {
-            $boundaryPage = $resultItem->getMonumentField('boundary-page');
+            $boundary = $resultItem->getMonumentField('boundary');
 
-            if ($boundaryPage !== null && $boundaryPage !== '') {
-                $boundaryPageReader = new BoundaryPageReader();
-                $boundaryData = $boundaryPageReader->read($boundaryPage);
-                $resultItem->setResultField(
-                    'boundary-coordinates',
-                    array_merge($resultItem->getResultField('boundary-coordinates'), [$boundaryData])
-                );
+            if ($boundary === null || $boundary === '' || $boundary === self::BOUNDARY_NO) {
+                continue;
             }
+
+            $boundaryPageReader = new BoundaryPageReader();
+            $boundaryData = $boundaryPageReader->read($boundary);
+            $resultItem->setResultField(
+                'boundary-coordinates',
+                array_merge($resultItem->getResultField('boundary-coordinates'), [$boundaryData])
+            );
         }
 
         $wikidataIds = [];
 
         foreach ($resultItems as $resultItem) {
-            if ($resultItem->getMonumentField('boundary-wdid-skip') === 'yes') {
+            $boundary = $resultItem->getMonumentField('boundary');
+
+            if ($boundary !== null && $boundary !== '') {
+                // coordinates are loaded from boundary page on Wikivoyage, we don't need to load them from OSM
                 continue;
             }
 
@@ -485,7 +492,10 @@ class Api
         foreach ($wikidataBoundaries as $wdid => $boundaryInfo) {
             /** @var MonumentResult $resultItem */
             foreach ($resultItemsByWdid[$wdid] as $resultItem) {
-                if ($resultItem->getMonumentField('boundary-wdid-skip') === 'yes') {
+                $boundary = $resultItem->getMonumentField('boundary');
+
+                if ($boundary !== null && $boundary !== '') {
+                    // coordinates are loaded from boundary page on Wikivoyage, we don't need to load them from OSM
                     continue;
                 }
 
