@@ -6,6 +6,8 @@
         <title>Wikivoyage Map</title>
         <link rel="icon" href="./lib/images/favicon.png" type="image/png"/>
         <link rel="stylesheet" href="./lib/leaflet/leaflet.css"/>
+        <link rel="stylesheet" href="./lib/markercluster/MarkerCluster.css"/>
+        <link rel="stylesheet" href="./lib/markercluster/MarkerCluster.Default.css"/>
         <link rel="stylesheet" href="./lib/poimap.css"/>
     </head>
     <body>
@@ -14,8 +16,10 @@
                 <img src="./lib/images/logo.png" alt="Logo" title="Version 2016-07-13" width="64" height="64">
             </div>
             <script type="text/javascript" src="./lib/url-params.js"></script>
+            <script type="text/javascript" src="./lib/async-utils.js"></script>
             <script type="text/javascript" src="./lib/jquery-3.3.1.min.js"></script>
             <script type="text/javascript" src="./lib/leaflet/leaflet.js"></script>
+            <script type="text/javascript" src="./lib/markercluster/leaflet.markercluster.js"></script>
             <script type="text/javascript" src="./lib/buttons-new.js"></script>
             <script type="text/javascript" src="./lib/zoomdisplay.js"></script>
             <script type="text/javascript" src="./lib/i18n.js"></script>
