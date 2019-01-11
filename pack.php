@@ -12,6 +12,7 @@ if (file_exists('dist/wvmap.tar.gz')) {
 
 $itemsToPack = [
     'index.htm',
+    'help.htm',
     'api.php',
     'ico24',
     'img',
