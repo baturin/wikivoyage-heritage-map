@@ -41,4 +41,14 @@ class RequestParams
     {
         return isset($_GET['filter']) ? $_GET['filter'] : null;
     }
+
+    public function getPrefix()
+    {
+        return isset($_GET['prefix']) ? $_GET['prefix'] : null;
+    }
+
+    public function getPrefixParts()
+    {
+        return isset($_GET['prefix-parts']) ? $_GET['prefix-parts'] : null;
+    }
 }

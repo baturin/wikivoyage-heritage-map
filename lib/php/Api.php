@@ -38,7 +38,7 @@ class Api
         if ($query === RequestParams::QUERY_GET_PAGE_DATA) {
             $this->processGetPageDataRequest($requestParams);
         } else if ($query === RequestParams::QUERY_LIST_PAGES) {
-            $this->handleError('Function is not implemented.');
+            $this->processListPagesRequest($requestParams);
         } else {
             $this->handleError('Please specify valid "query" parameter.');
         }
@@ -63,6 +63,49 @@ class Api
         }
 
         $this->handleSuccess($response);
+    }
+    
+    private function processListPagesRequest(RequestParams $requestParams)
+    {
+        $prefix = $requestParams->getPrefix();
+        if (!$prefix) {
+            $prefix = $requestParams->getPrefixParts() . ' (';
+        }
+
+        $wikivoyageApiUrl = 'https://ru.wikivoyage.org/w/api.php';
+        $params = [
+            'action' => 'query',
+            'list' => 'allpages',
+            'aplimit' => 'max',
+            'apprefix' => $prefix,
+            'format' => 'json'
+        ];
+
+        $result = [];
+
+        $apcontinue = null;
+
+        do {
+            if (!is_null($apcontinue)) {
+                $params['apcontinue'] = $apcontinue;
+            }
+
+            $encodedParams = $this->encodeUrlParams($params);
+            $url = "{$wikivoyageApiUrl}?{$encodedParams}";
+
+            $apiResponseStr = file_get_contents($url);
+            $apiResponse = json_decode($apiResponseStr, true);
+
+            foreach ($apiResponse['query']['allpages'] as $page) {
+                $result[] = [
+                    'title' => $page['title']
+                ];
+            }
+
+            $apcontinue = isset($apiResponse['continue']['apcontinue']) ? $apiResponse['continue']['apcontinue'] : null;
+        } while ($apcontinue !== null);
+
+        $this->handleSuccess($result);
     }
 
     private function getMapData($pageContents)
