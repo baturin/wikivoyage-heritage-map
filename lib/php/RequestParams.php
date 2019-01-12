@@ -6,6 +6,7 @@ class RequestParams
 {
     const QUERY_LIST_PAGES = 'list-pages';
     const QUERY_GET_PAGE_DATA = 'get-page-data';
+    const QUERY_GET_WIKIDATA_BOUNDARIES = 'get-wikidata-boundaries';
 
     public function getQuery()
     {
@@ -50,5 +51,10 @@ class RequestParams
     public function getPrefixParts()
     {
         return isset($_GET['prefix-parts']) ? $_GET['prefix-parts'] : null;
+    }
+
+    public function getWikidataId()
+    {
+        return isset($_GET['wikidata-id']) ? $_GET['wikidata-id'] : null;
     }
 }

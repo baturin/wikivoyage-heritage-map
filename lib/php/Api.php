@@ -39,6 +39,8 @@ class Api
             $this->processGetPageDataRequest($requestParams);
         } else if ($query === RequestParams::QUERY_LIST_PAGES) {
             $this->processListPagesRequest($requestParams);
+        } else if ($query === RequestParams::QUERY_GET_WIKIDATA_BOUNDARIES) {
+            $this->processGetWikidataBoundaries($requestParams);
         } else {
             $this->handleError('Please specify valid "query" parameter.');
         }
@@ -108,6 +110,19 @@ class Api
         $this->handleSuccess($result);
     }
 
+    private function processGetWikidataBoundaries(RequestParams $requestParams)
+    {
+        $wikidataId = $requestParams->getWikidataId();
+        $mapsReader = new WikimediaMapsReader();
+        $polygons = $mapsReader->getPolygonsForWikidataIds([$wikidataId]);
+
+        $this->handleSuccess(
+            [
+                'boundary-coordinates' => isset($polygons[$wikidataId]) ? $polygons[$wikidataId] : null
+            ]
+        );
+    }
+
     private function getMapData($pageContents)
     {
         $lat = null;
@@ -122,12 +137,14 @@ class Api
             $lat = (float)$firstMonumentTitleData['lat'];
             $long = (float)$firstMonumentTitleData['long'];
             $zoom = (int)$firstMonumentTitleData['zoom'];
+            $districtid = isset($firstMonumentTitleData['districtid']) ? $firstMonumentTitleData['districtid'] : null;
         }
 
         return [
             'lat' => $lat,
             'long' => $long,
-            'zoom' => $zoom
+            'zoom' => $zoom,
+            'districtid' => $districtid,
         ];
     }
 
