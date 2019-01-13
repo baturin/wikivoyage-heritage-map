@@ -224,12 +224,12 @@ class Api
 
         $result = $this->applyFilter($result, $requestParams->getFilter());
 
-        return array_map(
+        return array_values(array_map(
             function(MonumentResult $resultItem) {
                 return $resultItem->getResult();
             },
             $result
-        );
+        ));
     }
 
     const BOUNDARY_NO = 'no';
@@ -494,31 +494,63 @@ class Api
 
     /**
      * @param MonumentResult[] $resultItems
-     * @param string $filter
+     * @param string $filtersStr
      * @return array
      */
-    private function applyFilter($resultItems, $filter)
+    private function applyFilter($resultItems, $filtersStr)
     {
-        if ($filter === 'able-to-display-on-map') {
-            return array_filter(
-                $resultItems,
-                function (MonumentResult $monument) {
-                    $lat = $monument->getMonumentField('lat');
-                    $long = $monument->getMonumentField('long');
-                    $boundaryCoordinates = $monument->getResultField('boundary-coordinates');
+        $filters = is_null($filtersStr) ? [] : explode(',', $filtersStr);
 
-                    return (
-                        (
-                            $lat !== null && $lat !== '' && $long !== null && $long !== ''
-                        ) || (
-                            is_array($boundaryCoordinates) && !empty($boundaryCoordinates)
-                        )
-                    );
-                }
-            );
-        } else {
-            return $resultItems;
+        $filteredResultItems = $resultItems;
+
+        foreach ($filters as $filter) {
+            if ($filter === 'able-to-display-on-map') {
+                $filteredResultItems = $this->filterAbleToDisplayOnMap($filteredResultItems);
+            } else if ($filter === 'without-wikivoyage-boundary') {
+                $filteredResultItems = $this->filterWithoutWikivoyageBoundary($filteredResultItems);
+            }
         }
+
+        return $filteredResultItems;
+    }
+
+    /**
+     * @param MonumentResult[] $resultItems
+     * @return MonumentResult[]
+     */
+    private function filterAbleToDisplayOnMap($resultItems)
+    {
+        return array_filter(
+            $resultItems,
+            function (MonumentResult $monument) {
+                $lat = $monument->getMonumentField('lat');
+                $long = $monument->getMonumentField('long');
+                $boundaryCoordinates = $monument->getResultField('boundary-coordinates');
+
+                return (
+                    (
+                        $lat !== null && $lat !== '' && $long !== null && $long !== ''
+                    ) || (
+                        is_array($boundaryCoordinates) && !empty($boundaryCoordinates)
+                    )
+                );
+            }
+        );
+    }
+
+    /**
+     * @param MonumentResult[] $resultItems
+     * @return MonumentResult[]
+     */
+    private function filterWithoutWikivoyageBoundary($resultItems)
+    {
+        return array_filter(
+            $resultItems,
+            function (MonumentResult $monument) {
+                $boundary = StringUtils::nullStr($monument->getMonumentField('boundary'));
+                return $boundary === '' || $boundary === self::BOUNDARY_NO;
+            }
+        );
     }
 
     private function handleError($errorMessage)
