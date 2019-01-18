@@ -233,6 +233,7 @@ class Api
     }
 
     const BOUNDARY_NO = 'no';
+    const MARKER_NO = 'no';
 
     /**
      * @param MonumentResult[] $resultItems
@@ -506,8 +507,8 @@ class Api
         foreach ($filters as $filter) {
             if ($filter === 'able-to-display-on-map') {
                 $filteredResultItems = $this->filterAbleToDisplayOnMap($filteredResultItems);
-            } else if ($filter === 'without-wikivoyage-boundary') {
-                $filteredResultItems = $this->filterWithoutWikivoyageBoundary($filteredResultItems);
+            } else if ($filter === 'marker-enabled') {
+                $filteredResultItems = $this->filterMarkerEnabled($filteredResultItems);
             }
         }
 
@@ -542,13 +543,13 @@ class Api
      * @param MonumentResult[] $resultItems
      * @return MonumentResult[]
      */
-    private function filterWithoutWikivoyageBoundary($resultItems)
+    private function filterMarkerEnabled($resultItems)
     {
         return array_filter(
             $resultItems,
             function (MonumentResult $monument) {
-                $boundary = StringUtils::nullStr($monument->getMonumentField('boundary'));
-                return $boundary === '' || $boundary === self::BOUNDARY_NO;
+                $marker = $monument->getMonumentField('marker');
+                return $marker !== self::MARKER_NO;
             }
         );
     }
