@@ -128,6 +128,7 @@ class Api
         $lat = null;
         $long = null;
         $zoom = null;
+        $districtid = null;
 
         $templateReader = new TemplateReader();
         $monumentTitleDatas = $templateReader->read(['monument-title', 'monument-title/nature'], $pageContents);
@@ -166,10 +167,8 @@ class Api
             $result[] = new MonumentResult(self::MONUMENT_TYPE_NATURAL, $monument);
         }
 
+        /** @var $resultItem MonumentResult */
         foreach ($result as $resultItem) {
-            /** @var $resultItem MonumentResult */
-            $monumentData = [];
-
             foreach ($requestParams->getFields() as $field) {
                 $resultItem->setResultField(
                     $field,
@@ -290,20 +289,23 @@ class Api
         $wikimediaMapsReader = new WikimediaMapsReader();
 
         $wikidataBoundaries = $wikimediaMapsReader->getPolygonsForWikidataIds($wikidataIds);
-        foreach ($wikidataBoundaries as $wdid => $boundaryInfo) {
-            /** @var MonumentResult $resultItem */
-            foreach ($resultItemsByWdid[$wdid] as $resultItem) {
-                $boundary = $resultItem->getMonumentField('boundary');
 
-                if ($boundary !== null && $boundary !== '') {
-                    // coordinates are loaded from boundary page on Wikivoyage, we don't need to load them from OSM
-                    continue;
+        if ($wikidataBoundaries !== null) {
+            foreach ($wikidataBoundaries as $wdid => $boundaryInfo) {
+                /** @var MonumentResult $resultItem */
+                foreach ($resultItemsByWdid[$wdid] as $resultItem) {
+                    $boundary = $resultItem->getMonumentField('boundary');
+
+                    if ($boundary !== null && $boundary !== '') {
+                        // coordinates are loaded from boundary page on Wikivoyage, we don't need to load them from OSM
+                        continue;
+                    }
+
+                    $resultItem->setResultField(
+                        'boundary-coordinates',
+                        array_merge($resultItem->getResultField('boundary-coordinates'), $boundaryInfo)
+                    );
                 }
-
-                $resultItem->setResultField(
-                    'boundary-coordinates',
-                    array_merge($resultItem->getResultField('boundary-coordinates'), $boundaryInfo)
-                );
             }
         }
     }
