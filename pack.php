@@ -1,14 +1,15 @@
 <?php
 
 chdir(dirname(__FILE__));
-if (!file_exists('dist')) {
-    mkdir('dist');
+
+if (file_exists('dist')) {
+    system('rm -rf dist');
 }
 
+mkdir('dist');
+mkdir('dist/monmap');
+
 $resultFilename = 'dist/wvmap.tar.gz';
-if (file_exists('dist/wvmap.tar.gz')) {
-    unlink($resultFilename);
-}
 
 $itemsToPack = [
     'index.htm',
@@ -19,5 +20,9 @@ $itemsToPack = [
     'lib',
     'locale'
 ];
-$itemsToPackStr = implode(' ', $itemsToPack);
-system("tar -cvf {$resultFilename} {$itemsToPackStr}");
+
+foreach ($itemsToPack as $item) {
+    system("cp -r {$item} dist/monmap/{$item}");
+}
+
+system("tar -C dist -cvf {$resultFilename} monmap");
