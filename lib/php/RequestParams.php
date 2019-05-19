@@ -53,8 +53,11 @@ class RequestParams
         return isset($_GET['prefix-parts']) ? $_GET['prefix-parts'] : null;
     }
 
-    public function getWikidataId()
+    /**
+     * @return string[]|null
+     */
+    public function getWikidataIds()
     {
-        return isset($_GET['wikidata-id']) ? $_GET['wikidata-id'] : null;
+        return isset($_GET['wikidata-id']) ? explode(',', $_GET['wikidata-id']) : null;
     }
 }

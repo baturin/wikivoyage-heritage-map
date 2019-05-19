@@ -112,13 +112,22 @@ class Api
 
     private function processGetWikidataBoundaries(RequestParams $requestParams)
     {
-        $wikidataId = $requestParams->getWikidataId();
+        $wikidataIds = $requestParams->getWikidataIds();
         $mapsReader = new WikimediaMapsReader();
-        $polygons = $mapsReader->getPolygonsForWikidataIds([$wikidataId]);
+        $polygons = $mapsReader->getPolygonsForWikidataIds($wikidataIds);
+
+        $result = null;
+
+        if (is_array($polygons)) {
+            $result = [];
+            foreach ($polygons as $polygonData) {
+                $result = array_merge($result, $polygonData);
+            }
+        }
 
         $this->handleSuccess(
             [
-                'boundary-coordinates' => isset($polygons[$wikidataId]) ? $polygons[$wikidataId] : null
+                'boundary-coordinates' => $result
             ]
         );
     }
