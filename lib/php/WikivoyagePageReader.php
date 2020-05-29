@@ -12,6 +12,6 @@ class WikivoyagePageReader
     private function getUrl($page)
     {
         $page = str_replace(' ', '_', $page);
-        return "https://ru.wikivoyage.org/w/index.php?title=" . $page . "&action=raw";
+        return "https://ru.wikivoyage.org/w/index.php?title=" . urlencode($page) . "&action=raw";
     }
 }
