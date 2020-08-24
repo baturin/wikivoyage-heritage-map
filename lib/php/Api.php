@@ -232,9 +232,14 @@ class Api
 
         if (in_array('listing-url', $requestParams->getFields())) {
             foreach ($result as $resultItem) {
+                $knidUrl = '';
+                $knid = $resultItem->getMonumentField('knid');
+                if (!empty($knid)) {
+                    $knidUrl = '#' . urlencode($knid);
+                }
                 $resultItem->setResultField(
                     'listing-url',
-                    'https://ru.wikivoyage.org/wiki/' . $pageName
+                    'https://ru.wikivoyage.org/wiki/' . $pageName . $knidUrl
                 );
             }
         }
