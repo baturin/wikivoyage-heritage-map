@@ -61,7 +61,7 @@ class Api
         }
 
         if (in_array('monuments', $items)) {
-            $response['monuments'] = $this->getMonuments($requestParams, $pageContents);
+            $response['monuments'] = $this->getMonuments($requestParams, $page, $pageContents);
         }
 
         $this->handleSuccess($response);
@@ -161,7 +161,7 @@ class Api
     const MONUMENT_TYPE_CULTURAL = 'cultural';
     const MONUMENT_TYPE_NATURAL = 'natural';
 
-    private function getMonuments(RequestParams $requestParams, $pageContents)
+    private function getMonuments(RequestParams $requestParams, $pageName, $pageContents)
     {
         $templateReader = new TemplateReader();
 
@@ -226,6 +226,15 @@ class Api
                 $resultItem->setResultField(
                     'image-page-url',
                     $imagePageUrl
+                );
+            }
+        }
+
+        if (in_array('listing-url', $requestParams->getFields())) {
+            foreach ($result as $resultItem) {
+                $resultItem->setResultField(
+                    'listing-url',
+                    'https://ru.wikivoyage.org/wiki/' . $pageName
                 );
             }
         }

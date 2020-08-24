@@ -110,3 +110,19 @@ img{
   margin-left: -16px;
   margin-top: -16px;
 }
+
+.action-link {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.action-image {
+  height: 16px;
+  width: 16px;
+}
+
+.action-text {
+  padding-left: 4px;
+  white-space: nowrap;
+}
