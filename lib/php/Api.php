@@ -29,6 +29,11 @@ function imageUrl($image)
 
 class Api
 {
+    /**
+     * @var array
+     */
+    private $regionCommonCategories;
+
     public function processRequest()
     {
         $requestParams = new RequestParams();
@@ -378,6 +383,21 @@ class Api
             $district = StringUtils::nullStr($monumentResult->getMonumentField('district'));
             $commonscat = StringUtils::nullStr($monumentResult->getMonumentField('commonscat'));
 
+            $regionCommonCategories = $this->readRegionCommonCategories();
+            if (!empty($commonscat)) {
+                $categories = $commonscat;
+            } else {
+                if (isset($regionCommonCategories[$region][$district . '_' . $municipality])) {
+                    $categories = $regionCommonCategories[$region][$district . '_' . $municipality];
+                } else if (isset($regionCommonCategories[$region][$district])) {
+                    $categories = $regionCommonCategories[$region][$district];
+                } else if (isset($regionCommonCategories[$region]['default'])) {
+                    $categories = $regionCommonCategories[$region]['default'];
+                } else {
+                    $categories = '';
+                }
+            }
+
             $uploadCampaign = $this->getUploadCampaign($monumentResult);
 
             if ($uploadCampaign !== null) {
@@ -402,7 +422,7 @@ class Api
                     'id' => $knid,
                     'id2' => $uid,
                     'description' => $uploadDesc,
-                    'categories' => $commonscat,
+                    'categories' => $categories,
                     'uselang' => 'ru',
 
                 ];
@@ -538,6 +558,26 @@ class Api
         }
 
         return $filteredResultItems;
+    }
+
+    private function readRegionCommonCategories()
+    {
+        if ($this->regionCommonCategories === null) {
+            $url = 'https://ru.wikivoyage.org/wiki/%D0%A8%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD:Monument/commonscat?action=raw&templates=expand';
+            $rawData = @file_get_contents($url);
+            if ($rawData === false) {
+                $this->regionCommonCategories = [];
+            } else {
+                $regionCommonCategories = json_decode($rawData, true);
+                if (!is_array($regionCommonCategories)) {
+                    $this->regionCommonCategories = [];
+                } else {
+                    $this->regionCommonCategories = $regionCommonCategories;
+                }
+            }
+        }
+
+        return $this->regionCommonCategories;
     }
 
     /**

@@ -4,5 +4,8 @@
   },
   "scripts": {
     "test": "phpunit tests"
+  },
+  "require": {
+    "ext-json": "*"
   }
 }
