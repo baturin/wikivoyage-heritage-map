@@ -223,7 +223,7 @@ class Api
                 $image = $resultItem->getMonumentField('image');
 
                 if (!is_null($image) && $image !== '') {
-                    $imagePageUrl = 'https://ru.m.wikivoyage.org/wiki/File:' . imageUrl($image);
+                    $imagePageUrl = 'https://ru.wikivoyage.org/wiki/File:' . imageUrl($image);
                 } else {
                     $imagePageUrl = null;
                 }
